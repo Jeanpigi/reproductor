@@ -1,0 +1,18 @@
+<div class="container__player">
+    <div class="container__index">
+        <div class="container__list-player">
+            <div class="content_form">
+                <h1 class="titulo">Cargar la cancion</h1>
+                <form class="upload-form" action="/canciones" method="POST" enctype="multipart/form-data">
+                    <label class="upload-label" for="cancion">Selecciona el archivo:</label>
+                    <input class="upload-input" type="file" name="cancion" accept="audio/*" id="filePath"
+                        oninput="enableUploadButton()" />
+                    <button class="upload-button" id="uploadButton" type="submit" disabled>
+                        Cargar
+                    </button>
+                </form>
+                <script defer src="/js/loadFile.js"></script>
+            </div>
+        </div>
+    </div>
+</div>

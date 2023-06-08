@@ -1,0 +1,11 @@
+<div class="container__index">
+    <h1 class="titulo">Iniciar sesión</h1>
+    <form class="formulario__signup" action="/login" method="POST" onsubmit="return validateForm()">
+        <input class="formulario__input" type="text" name="username" id="usernameInput"
+            placeholder="Nombre de usuario" />
+        <input class="formulario__input" type="password" name="password" id="passwordInput" placeholder="Contraseña" />
+        <input class="button__link" type="submit" value="Iniciar sesión" />
+    </form>
+    <a class="link__url" href="/signup">¿No tienes una cuenta? Regístrate</a>
+</div>
+<script src="/js/validateForm.js"></script>
