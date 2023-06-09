@@ -41,7 +41,7 @@ const adsUpload = multer({
         if (fileExtension === 'mp3') {
             cb(null, true);
         } else {
-            cb(new Error('Solo se permiten archivos MP3 y M4A.'), false);
+            cb(new Error('Solo se permiten archivos MP3'), false);
         }
         cb(null, true);
     }

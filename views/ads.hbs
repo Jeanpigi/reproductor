@@ -1,13 +1,18 @@
 <div class="content__player">
-    <div class="content__song">
-        {{#each rows}}
-        <form action="/anuncios/{{this.id}}" method="POST" class="delete-form">
-            <span class="song-title">{{this.filename}}</span>
-            <button class="delete-button" type="submit">
-                <i class="fa fa-trash" aria-hidden="true"></i>
-            </button>
-        </form>
-        {{/each}}
+    <div class="container__content">
+        <div class="content__song">
+            {{#each rows}}
+            <form action="/anuncios/{{this.id}}" method="POST" class="delete-form">
+                <div class="content_form">
+                    <span class="song-title">{{this.filename}}</span>
+                    <button class="delete-button" type="submit" onclick="confirmDelete(event)">
+                        <i class="fa fa-trash" aria-hidden="true"></i>
+                    </button>
+                </div>
+            </form>
+            {{/each}}
+        </div>
+        <script defer src="/js/confirmDelete.js"></script>
     </div>
     <div class="container__index">
         <div class="container__list-player">

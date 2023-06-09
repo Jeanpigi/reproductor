@@ -74,11 +74,13 @@ exports.getAllSongs = async (req, res) => {
     }
 };
 
-exports.getAllcanciones = async (req, res) => {
+exports.getAll = async (req, res) => {
     try {
-        const query = 'SELECT * FROM canciones';
-        const [rows] = await pool.execute(query);
-        res.render('songs', { rows });
+        const queryCanciones = 'SELECT * FROM canciones';
+        const [canciones] = await pool.execute(queryCanciones);
+        const queryAnuncios = 'SELECT * FROM anuncios';
+        const [anuncios] = await pool.execute(queryAnuncios);
+        res.render('songs', { canciones, anuncios });
     } catch (error) {
         console.error(error)
         res.send('Error del parte del servidor');
@@ -161,7 +163,7 @@ exports.insertAds = async (req, res) => {
         // Simulación de retraso para mostrar el indicador de carga
         setTimeout(() => {
             console.log("se completó la carga del anuncio");
-            res.redirect('/anuncios');
+            res.redirect('/canciones');
         }, 2000);
     } catch (error) {
         console.error(error);
@@ -186,7 +188,7 @@ exports.deleteAds = async (req, res) => {
                 console.log('Archivo eliminado exitosamente');
             }
         });
-        res.redirect("/anuncios");
+        res.redirect("/canciones");
     } catch (error) {
         console.error(error);
         res.send('Ha ocurrido un error del lado del servidor');

@@ -5,7 +5,7 @@ const prevButton = document.getElementById('backward');
 const playerImage = document.getElementById('player-image');
 const audioPlayer = document.getElementById('audio-player');
 const titulo = document.getElementById("titulo");
-const songs = document.getElementById("songs");
+const selection = document.getElementById("select");
 const range = document.getElementById('duration__range');
 
 const urlCanciones = '/api/canciones';
@@ -20,7 +20,7 @@ let isRotating = false;
 // esta variable permite reproducir la canción aleaotoriamente la primera vez
 let primeraVez = true;
 
-const playAdInterval = 120; // Intervalo de tiempo para mostrar el anuncio en segundos (2 minutos = 120 segundos)
+const adDuration = 120; // Duración del anuncio en segundos (2 minutos)
 let hasPlayedAd = false; // Variable para controlar si el anuncio ya ha sido reproducido
 
 
@@ -29,10 +29,16 @@ const getData = async () => {
     try {
         const response = await fetch(urlCanciones);
         const responseAds = await fetch(urlAnuncios);
-        const data = await response.json();
+        const songs = await response.json();
         const ads = await responseAds.json();
-        canciones = data;
-        anuncios = ads;
+
+        //Esto es para recorrer y solo agregar lo que se necesita
+        const songData = songs.map(song => song.filename);
+        const adsData = ads.map(ad => ad.filename);
+
+        canciones = songData;
+        anuncios = adsData;
+
         loadSongs();
     } catch (error) {
         console.error('Error:', error);
@@ -40,54 +46,36 @@ const getData = async () => {
 }
 
 const loadSongs = () => {
-    canciones.forEach((song, index) => {
-        const li = document.createElement("li");
-        const link = document.createElement("a");
-        link.textContent = song.filename;
-        link.href = "#";
-        link.addEventListener("click", () => loadSong(index));
-        li.appendChild(link);
-        songs.appendChild(li);
-    });
+    for (let index = 0; index < canciones.length; index++) {
+        const song = canciones[index];
+        const option = document.createElement("option");
+        option.textContent = song;
+        option.value = index;
+        selection.appendChild(option);
+    }
 }
 
 const loadSong = (songIndex) => {
     if (songIndex !== actualSong) {
         changeActiveClass(actualSong, songIndex);
         actualSong = songIndex;
-        audioPlayer.src = "/music/" + canciones[songIndex].filename;
+        audioPlayer.src = "/music/" + canciones[songIndex];
         playSong();
         changeSongtitle(songIndex);
     }
 }
 
 
-function playAd() {
+const playAd = () => {
     pauseSong(); // Pausa la canción actual
     const adIndex = Math.floor(Math.random() * anuncios.length); // Obtén un índice aleatorio para el anuncio
-    const adUrl = "/publicidad/" + anuncios[adIndex].filename; // URL del anuncio
-    const adDuration = anuncios[adIndex].duration; // Duración del anuncio en segundos
-
     // Cargar y reproducir el anuncio
-    audioPlayer.src = adUrl;
+    audioPlayer.src = "/publicidad/" + adsData[adIndex];
     audioPlayer.play();
 
     // Esperar la duración del anuncio y reanudar la canción actual
     setTimeout(() => {
-        playSong(); // Reanudar la canción
-    }, adDuration * 1000);
-}
-
-function playAd() {
-    pauseSong(); // Pausa la canción actual
-    const adIndex = Math.floor(Math.random() * anuncios.length); // Obtén un índice aleatorio para el anuncio
-    // Cargar y reproducir el anuncio
-    audioPlayer.src = "/publicidad/" + anuncios[adIndex].filename;
-    audioPlayer.play();
-
-    // Esperar la duración del anuncio y reanudar la canción actual
-    setTimeout(() => {
-        audioPlayer.src = "/music/" + canciones[actualSong].filename;
+        audioPlayer.src = "/music/" + canciones[actualSong];
         playSong(); // Reanudar la canción
         hasPlayedAd = false;
     }, adDuration * 1000);
@@ -102,7 +90,7 @@ const stopRotation = () => {
     cancelAnimationFrame(animationId);
 };
 
-function updateControls() {
+const updateControls = () => {
     if (audioPlayer.paused) {
         play.classList.remove("fa-pause");
         play.classList.add("fa-play");
@@ -114,20 +102,20 @@ function updateControls() {
     }
 }
 
-function updateProgress(event) {
+const updateProgress = (event) => {
     const { duration, currentTime } = event.srcElement;
     const percent = (currentTime / duration) * 100;
     range.value = percent;
 }
 
-function setProgress(event) {
+const setProgress = (event) => {
     const totalWidth = this.offsetWidth;
     const progressWidth = event.offsetX;
     const current = (progressWidth / totalWidth) * audioPlayer.duration;
     audioPlayer.currentTime = current;
 }
 
-function playSong() {
+const playSong = () => {
     if (actualSong !== null) {
         if (audioPlayer.currentTime > 0) {
             audioPlayer.play();
@@ -142,26 +130,26 @@ function playSong() {
     }
 }
 
-function pauseSong() {
+const pauseSong = () => {
     audioPlayer.pause();
     updateControls();
     stopRotation();
     isRotating = false;
 }
 
-function changeActiveClass(lastIndex, newIndex) {
-    const links = document.querySelectorAll("#songs a");
+const changeActiveClass = (lastIndex, newIndex) => {
+    const cancion = document.querySelectorAll("#select option");
     if (lastIndex !== null) {
-        links[lastIndex].classList.remove("active");
+        cancion[lastIndex].classList.remove("active");
     }
-    links[newIndex].classList.add("active");
+    cancion[newIndex].classList.add("active");
 }
 
-function changeSongtitle(songIndex) {
-    titulo.innerText = canciones[songIndex].filename;
+const changeSongtitle = (songIndex) => {
+    titulo.innerText = canciones[songIndex];
 }
 
-function prevSong() {
+const prevSong = () => {
     if (actualSong > 0) {
         loadSong(actualSong - 1);
     } else {
@@ -169,7 +157,7 @@ function prevSong() {
     }
 }
 
-function nextSong() {
+const nextSong = () => {
     if (actualSong < canciones.length - 1) {
         loadSong(actualSong + 1);
     } else {
@@ -211,13 +199,13 @@ audioPlayer.addEventListener('ended', function () {
     nextSong(); // Ir a la siguiente canción al finalizar la actual
 });
 
-function formatTime(time) {
+const formatTime = (time) => {
     const minutes = Math.floor(time / 60);
     const seconds = Math.floor(time % 60);
     return padTime(minutes) + ':' + padTime(seconds);
 }
 
-function padTime(time) {
+const padTime = (time) => {
     return (time < 10 ? '0' : '') + time;
 }
 

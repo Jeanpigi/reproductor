@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-const { signup, login, getAllSongs, getAllcanciones, getAllAnuncios, getAllAds, deleteSong, insertAds, insertSong, deleteAds } = require('../controllers/indexController');
+const { signup, login, getAllSongs, getAll, getAllAds, deleteSong, insertAds, insertSong, deleteAds } = require('../controllers/indexController');
 const { adsUpload, musicUpload } = require('../utils/multerConfig');
 
 //Middlewares
@@ -27,7 +27,7 @@ router.get('/signup', (req, res) => {
 router.post('/signup', signup);
 
 //Rutas de las canciones
-router.get('/canciones', verificarSesion, getAllcanciones, controlInactividad);
+router.get('/canciones', verificarSesion, getAll, controlInactividad);
 
 router.post('/canciones', verificarSesion, musicUpload.single('cancion'), insertSong, controlInactividad);
 
@@ -35,7 +35,7 @@ router.post('/canciones/:id', deleteSong);
 
 
 //Ruta de los dashboard de los anuncios
-router.get('/anuncios', verificarSesion, getAllAnuncios, controlInactividad);
+// router.get('/anuncios', verificarSesion, getAllAnuncios, controlInactividad);
 
 router.post('/anuncios', verificarSesion, adsUpload.single('anuncios'), insertAds, controlInactividad);
 
@@ -58,5 +58,6 @@ router.get('/logout', (req, res) => {
 router.use((req, res) => {
     res.status(404).render('404', { mensaje: 'Pagina no encontrada' });
 });
+
 
 module.exports = router;
