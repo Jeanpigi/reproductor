@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-const { signup, login, getAllSongs, getAllAds, insertAds, insertSong } = require('../controllers/indexController');
+const { signup, login, getAllSongs, getAllcanciones, getAllAnuncios, getAllAds, deleteSong, insertAds, insertSong, deleteAds } = require('../controllers/indexController');
 const { adsUpload, musicUpload } = require('../utils/multerConfig');
 
 //Middlewares
@@ -27,29 +27,19 @@ router.get('/signup', (req, res) => {
 router.post('/signup', signup);
 
 //Rutas de las canciones
-router.get('/canciones', verificarSesion, (req, res) => {
-    // Verificar si el usuario ha iniciado sesión
-    if (req.session.user) {
-        res.render('songs');
-    } else {
-        res.redirect('/login');
-    }
-}, controlInactividad);
+router.get('/canciones', verificarSesion, getAllcanciones, controlInactividad);
 
-router.post('/canciones', musicUpload.single('cancion'), insertSong);
+router.post('/canciones', verificarSesion, musicUpload.single('cancion'), insertSong, controlInactividad);
+
+router.post('/canciones/:id', deleteSong);
 
 
 //Ruta de los dashboard de los anuncios
-router.get('/anuncios', verificarSesion, (req, res) => {
-    // Verificar si el usuario ha iniciado sesión
-    if (req.session.user) {
-        res.render('ads');
-    } else {
-        res.redirect('/login');
-    }
-}, controlInactividad);
+router.get('/anuncios', verificarSesion, getAllAnuncios, controlInactividad);
 
-router.post('/anuncios', adsUpload.single('anuncios'), insertAds);
+router.post('/anuncios', verificarSesion, adsUpload.single('anuncios'), insertAds, controlInactividad);
+
+router.post('/anuncios/:id', deleteAds);
 
 //Apis
 router.get("/api/canciones", getAllSongs);

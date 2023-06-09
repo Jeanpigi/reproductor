@@ -1,0 +1,7 @@
+POST http://localhost:3000/dashboard
+Content-Type: application/json
+
+{
+  "filename": "Canción de prueba",
+  "filepath": "ruta/archivo.mp3"
+}

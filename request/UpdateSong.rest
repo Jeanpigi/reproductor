@@ -1,0 +1,8 @@
+PUT http://localhost:3000/dashboard/1
+Content-Type: application/json
+
+{
+  "titulo": "So High",
+  "artista": "Wiz Khalifa",
+  "archivo": "/music/1.m4a"
+}

@@ -1,4 +1,14 @@
-<div class="container__player">
+<div class="content__player">
+    <div class="content__song">
+        {{#each rows}}
+        <form action="/anuncios/{{this.id}}" method="POST" class="delete-form">
+            <span class="song-title">{{this.filename}}</span>
+            <button class="delete-button" type="submit">
+                <i class="fa fa-trash" aria-hidden="true"></i>
+            </button>
+        </form>
+        {{/each}}
+    </div>
     <div class="container__index">
         <div class="container__list-player">
             <div class="content_form">

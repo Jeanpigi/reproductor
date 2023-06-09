@@ -1,5 +1,6 @@
 const bcrypt = require('bcrypt');
 const mysql = require('mysql2/promise');
+const fs = require('fs');
 require('dotenv').config();
 
 const dbConfig = {
@@ -73,6 +74,17 @@ exports.getAllSongs = async (req, res) => {
     }
 };
 
+exports.getAllcanciones = async (req, res) => {
+    try {
+        const query = 'SELECT * FROM canciones';
+        const [rows] = await pool.execute(query);
+        res.render('songs', { rows });
+    } catch (error) {
+        console.error(error)
+        res.send('Error del parte del servidor');
+    }
+};
+
 
 exports.insertSong = async (req, res) => {
     const filename = req.file.filename;
@@ -92,11 +104,47 @@ exports.insertSong = async (req, res) => {
     }
 };
 
+exports.deleteSong = async (req, res) => {
+    const { id } = req.params;
+    try {
+        const selectQuery = 'SELECT filepath FROM canciones WHERE id = ?';
+        const [result] = await pool.execute(selectQuery, [id]);
+        const filepath = result[0].filepath;
+
+        const deleteQuery = 'DELETE FROM canciones WHERE id = ?';
+        await pool.execute(deleteQuery, [id]);
+
+        fs.unlink(filepath, (err) => {
+            if (err) {
+                console.error(err);
+            } else {
+                console.log('Archivo eliminado exitosamente');
+
+            }
+        });
+        res.redirect("/canciones");
+    } catch (error) {
+        console.error(error);
+        res.send('Ha ocurrido un error del lado del servidor');
+    }
+};
+
 exports.getAllAds = async (req, res) => {
     try {
         const query = 'SELECT * FROM anuncios';
         const [rows] = await pool.execute(query);
         res.json(rows);
+    } catch (error) {
+        console.error(error)
+        res.send('Error del parte del servidor');
+    }
+};
+
+exports.getAllAnuncios = async (req, res) => {
+    try {
+        const query = 'SELECT * FROM anuncios';
+        const [rows] = await pool.execute(query);
+        res.render('ads', { rows })
     } catch (error) {
         console.error(error)
         res.send('Error del parte del servidor');
@@ -118,6 +166,30 @@ exports.insertAds = async (req, res) => {
     } catch (error) {
         console.error(error);
         res.send('Ocurrio un error del lado del servidor');
+    }
+};
+
+exports.deleteAds = async (req, res) => {
+    const { id } = req.params;
+    try {
+        const selectQuery = 'SELECT filepath FROM anuncios WHERE id = ?';
+        const [result] = await pool.execute(selectQuery, [id]);
+        const filepath = result[0].filepath;
+
+        const deleteQuery = 'DELETE FROM anuncios WHERE id = ?';
+        await pool.execute(deleteQuery, [id]);
+
+        fs.unlink(filepath, (err) => {
+            if (err) {
+                console.error(err);
+            } else {
+                console.log('Archivo eliminado exitosamente');
+            }
+        });
+        res.redirect("/anuncios");
+    } catch (error) {
+        console.error(error);
+        res.send('Ha ocurrido un error del lado del servidor');
     }
 };
 
