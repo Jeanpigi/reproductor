@@ -17,8 +17,13 @@ let anuncios = [];
 let actualSong = null;
 let isRotating = false;
 
-// Contador de anuncios
-let adCount = 0;
+// esta variable permite reproducir la canción aleaotoriamente la primera vez
+let primeraVez = true;
+
+const playAdInterval = 120; // Intervalo de tiempo para mostrar el anuncio en segundos (2 minutos = 120 segundos)
+let hasPlayedAd = false; // Variable para controlar si el anuncio ya ha sido reproducido
+
+
 
 const getData = async () => {
     try {
@@ -56,22 +61,6 @@ const loadSong = (songIndex) => {
     }
 }
 
-// const loadSong = (songIndex) => {
-//     if (songIndex !== actualSong) {
-//         changeActiveClass(actualSong, songIndex);
-//         actualSong = songIndex;
-//         if (adCount === 1) {
-//             playAd();
-//             adCount = 0;
-//         } else {
-//             audioPlayer.src = "/music/" + canciones[songIndex].filename;
-//             playSong();
-//             adCount++;
-//         }
-//         changeSongtitle(songIndex);
-//     }
-// }
-
 
 function playAd() {
     pauseSong(); // Pausa la canción actual
@@ -89,6 +78,20 @@ function playAd() {
     }, adDuration * 1000);
 }
 
+function playAd() {
+    pauseSong(); // Pausa la canción actual
+    const adIndex = Math.floor(Math.random() * anuncios.length); // Obtén un índice aleatorio para el anuncio
+    // Cargar y reproducir el anuncio
+    audioPlayer.src = "/publicidad/" + anuncios[adIndex].filename;
+    audioPlayer.play();
+
+    // Esperar la duración del anuncio y reanudar la canción actual
+    setTimeout(() => {
+        audioPlayer.src = "/music/" + canciones[actualSong].filename;
+        playSong(); // Reanudar la canción
+        hasPlayedAd = false;
+    }, adDuration * 1000);
+}
 
 const rotateImage = () => {
     playerImage.style.transform += 'rotate(1deg)';
@@ -174,19 +177,21 @@ function nextSong() {
     }
 }
 
-audioPlayer.addEventListener("ended", nextSong);
-playButton.addEventListener("click", () => {
-    if (audioPlayer.paused) {
-        if (audioPlayer.currentTime > 0) {
+playButton.addEventListener('click', () => {
+    if (primeraVez) {
+        const randomIndex = Math.floor(Math.random() * canciones.length);
+        loadSong(randomIndex);
+        playSong();
+        primeraVez = false;
+    } else {
+        if (audioPlayer.paused) {
             playSong();
         } else {
-            loadSong(0);
-            playSong();
+            pauseSong();
         }
-    } else {
-        pauseSong();
     }
 });
+
 
 audioPlayer.addEventListener('timeupdate', function () {
     const currentTime = audioPlayer.currentTime;
@@ -194,6 +199,16 @@ audioPlayer.addEventListener('timeupdate', function () {
     range.value = (currentTime / duration) * 100;
     document.querySelector('.start').textContent = formatTime(currentTime);
     document.querySelector('.end').textContent = formatTime(duration);
+});
+
+
+audioPlayer.addEventListener('ended', function () {
+    // Verificar si han pasado dos minutos y no se ha mostrado el anuncio aún
+    if (audioPlayer.currentTime >= playAdInterval && !hasPlayedAd) {
+        playAd();
+        hasPlayedAd = true; // Marcar el anuncio como reproducido para evitar que se repita
+    }
+    nextSong(); // Ir a la siguiente canción al finalizar la actual
 });
 
 function formatTime(time) {

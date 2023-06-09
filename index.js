@@ -5,6 +5,7 @@ const path = require("path");
 const exphbs = require('express-handlebars');
 const compression = require('compression');
 const cors = require('cors');
+const session = require('express-session');
 
 //Rutas
 const index = require("./routes/index");
@@ -17,6 +18,16 @@ app.use(morgan("tiny"));
 app.use(express.json());
 app.use(cors());
 app.use(compression());
+
+// Configurar express-session
+app.use(session({
+    secret: process.env.SESSION_SECRET, // Cambia esto por una cadena secreta para la sesión
+    resave: false,
+    saveUninitialized: true,
+    cookie: {
+        maxAge: 600000, // Duración de la sesión en milisegundos (10 minutos)
+    },
+}));
 
 // Configuración de Handlebars como motor de plantillas
 app.set("views", path.join(__dirname, "views"));
