@@ -14,36 +14,36 @@ router.get('/', (req, res) => {
 });
 
 // Ruta de login y register user
-router.get('/login', (req, res) => {
-    res.render('login');
-});
-
-router.post('/login', login);
-
 router.get('/signup', (req, res) => {
     res.render('signup');
 });
 
 router.post('/signup', signup);
 
-//Rutas de las canciones
-router.get('/canciones', verificarSesion, getAll, controlInactividad);
+router.get('/login', (req, res) => {
+    res.render('login');
+});
 
-router.post('/canciones', verificarSesion, musicUpload.single('cancion'), insertSong, controlInactividad);
+router.post('/login', login);
+
+//Rutas de las canciones
+router.get('/canciones', getAll, controlInactividad);
+
+router.post('/canciones', musicUpload, insertSong, controlInactividad);
 
 router.post('/canciones/:id', deleteSong);
 
-
 //Ruta de los dashboard de los anuncios
-// router.get('/anuncios', verificarSesion, getAllAnuncios, controlInactividad);
+// router.get('/anuncios', getAllAnuncios, controlInactividad);
 
-router.post('/anuncios', verificarSesion, adsUpload.single('anuncios'), insertAds, controlInactividad);
+router.post('/anuncios', adsUpload, insertAds, controlInactividad);
 
 router.post('/anuncios/:id', deleteAds);
 
 //Apis
 router.get("/api/canciones", getAllSongs);
 router.get("/api/anuncios", getAllAds);
+
 
 //Ruta para el logout 
 router.get('/logout', (req, res) => {

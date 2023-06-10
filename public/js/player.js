@@ -6,6 +6,8 @@ const playerImage = document.getElementById('player-image');
 const audioPlayer = document.getElementById('audio-player');
 const titulo = document.getElementById("titulo");
 const selection = document.getElementById("select");
+const iconMenu = document.getElementById("icon-menu");
+const playerTitle = document.getElementById('player__title');
 const range = document.getElementById('duration__range');
 
 const urlCanciones = '/api/canciones';
@@ -17,35 +19,67 @@ let anuncios = [];
 let actualSong = null;
 let isRotating = false;
 
+let animationId; // Declaración de la variable animationId
+
 // esta variable permite reproducir la canción aleaotoriamente la primera vez
 let primeraVez = true;
 
 const adDuration = 120; // Duración del anuncio en segundos (2 minutos)
 let hasPlayedAd = false; // Variable para controlar si el anuncio ya ha sido reproducido
 
+let isDragging = false; // Variable para controlar si el rango está siendo arrastrado
 
 
-const getData = async () => {
+const updateData = async () => {
     try {
-        const response = await fetch(urlCanciones);
+        const responseSongs = await fetch(urlCanciones);
         const responseAds = await fetch(urlAnuncios);
-        const songs = await response.json();
+        const songs = await responseSongs.json();
         const ads = await responseAds.json();
-
-        //Esto es para recorrer y solo agregar lo que se necesita
         const songData = songs.map(song => song.filename);
-        const adsData = ads.map(ad => ad.filename);
+        const adData = ads.map(ad => ad.filename);
 
-        canciones = songData;
-        anuncios = adsData;
+        // Verificar si hay cambios en la lista de canciones
+        if (!arraysAreEqual(canciones, songData)) {
+            canciones = songData;
+            loadSongs();
+        }
 
-        loadSongs();
+        // Verificar si hay cambios en la lista de anuncios
+        if (!arraysAreEqual(anuncios, adData)) {
+            anuncios = adData;
+            // Actualizar la lógica relacionada con los anuncios
+            // ...
+        }
+
+        // Continuar consultando la API en intervalos de tiempo
+        setTimeout(updateData, 5000); // Consultar cada 5 segundos (puedes ajustar el intervalo según tus necesidades)
     } catch (error) {
         console.error('Error:', error);
     }
-}
+};
+
+// Resto del código...
+
+// Función para verificar si dos arrays son iguales
+const arraysAreEqual = (arr1, arr2) => {
+    if (arr1.length !== arr2.length) {
+        return false;
+    }
+
+    for (let i = 0; i < arr1.length; i++) {
+        if (arr1[i] !== arr2[i]) {
+            return false;
+        }
+    }
+
+    return true;
+};
 
 const loadSongs = () => {
+    // Eliminar todas las opciones existentes antes de cargar las nuevas
+    selection.innerHTML = "";
+
     for (let index = 0; index < canciones.length; index++) {
         const song = canciones[index];
         const option = document.createElement("option");
@@ -64,7 +98,6 @@ const loadSong = (songIndex) => {
         changeSongtitle(songIndex);
     }
 }
-
 
 const playAd = () => {
     pauseSong(); // Pausa la canción actual
@@ -103,17 +136,20 @@ const updateControls = () => {
 }
 
 const updateProgress = (event) => {
-    const { duration, currentTime } = event.srcElement;
+    const { duration, currentTime } = event.target;
     const percent = (currentTime / duration) * 100;
     range.value = percent;
-}
+    range.style.setProperty('--progress', percent);
+    document.querySelector('.start').textContent = formatTime(currentTime);
+    document.querySelector('.end').textContent = formatTime(duration);
+};
 
 const setProgress = (event) => {
-    const totalWidth = this.offsetWidth;
+    const totalWidth = range.offsetWidth;
     const progressWidth = event.offsetX;
     const current = (progressWidth / totalWidth) * audioPlayer.duration;
     audioPlayer.currentTime = current;
-}
+};
 
 const playSong = () => {
     if (actualSong !== null) {
@@ -166,29 +202,21 @@ const nextSong = () => {
 }
 
 playButton.addEventListener('click', () => {
-    if (primeraVez) {
-        const randomIndex = Math.floor(Math.random() * canciones.length);
-        loadSong(randomIndex);
-        playSong();
-        primeraVez = false;
-    } else {
-        if (audioPlayer.paused) {
+    if (audioPlayer.paused) {
+        if (primeraVez) {
+            const randomIndex = Math.floor(Math.random() * canciones.length);
+            loadSong(randomIndex);
             playSong();
+            primeraVez = false;
         } else {
-            pauseSong();
+            playSong();
         }
+    } else {
+        pauseSong();
     }
 });
 
-
-audioPlayer.addEventListener('timeupdate', function () {
-    const currentTime = audioPlayer.currentTime;
-    const duration = audioPlayer.duration;
-    range.value = (currentTime / duration) * 100;
-    document.querySelector('.start').textContent = formatTime(currentTime);
-    document.querySelector('.end').textContent = formatTime(duration);
-});
-
+audioPlayer.addEventListener('timeupdate', updateProgress);
 
 audioPlayer.addEventListener('ended', function () {
     // Verificar si han pasado dos minutos y no se ha mostrado el anuncio aún
@@ -199,6 +227,41 @@ audioPlayer.addEventListener('ended', function () {
     nextSong(); // Ir a la siguiente canción al finalizar la actual
 });
 
+iconMenu.addEventListener("click", () => {
+    select.classList.toggle("hide");
+    playerTitle.classList.toggle("hide");
+});
+
+
+selection.addEventListener('change', () => {
+    const songIndex = parseInt(selection.value);
+    loadSong(songIndex);
+});
+
+// Agrega el event listener 'input' para actualizar el progreso y el color de la pista
+range.addEventListener('input', updateProgress);
+
+// Agrega el event listener 'click' para cambiar la posición de reproducción
+range.removeEventListener('click', setProgress);
+
+
+// Agrega el event listener 'mousedown' para indicar que el rango está siendo arrastrado
+range.addEventListener('mousedown', () => {
+    isDragging = true;
+});
+
+// Agrega el event listener 'mouseup' para indicar que se ha dejado de arrastrar el rango
+range.addEventListener('mouseup', () => {
+    isDragging = false;
+});
+
+// Agrega el event listener 'click' para cambiar la posición de reproducción solo si no se está arrastrando el rango
+range.addEventListener('click', (event) => {
+    if (!isDragging) {
+        setProgress(event);
+    }
+});
+
 const formatTime = (time) => {
     const minutes = Math.floor(time / 60);
     const seconds = Math.floor(time % 60);
@@ -206,10 +269,14 @@ const formatTime = (time) => {
 }
 
 const padTime = (time) => {
-    return (time < 10 ? '0' : '') + time;
+    if (typeof time !== 'number') {
+        return time; // Si el tiempo no es un número, devuelve el valor sin modificar
+    }
+    return (time < 10 ? '0' + time : time);
 }
 
 nextButton.addEventListener("click", nextSong);
 prevButton.addEventListener("click", prevSong);
 
-getData();
+// Llamar a la función inicialmente para cargar los datos
+updateData();

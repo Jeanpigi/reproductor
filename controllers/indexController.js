@@ -53,8 +53,8 @@ exports.login = async (req, res) => {
             return res.send('Credenciales inválidas');
         }
 
-        // Guardar el usuario en la sesión
-        req.session.user = { username };
+        req.session.user = { username: username }; // Guarda un objeto con la propiedad "username" en req.session.user
+        console.log('req.session:', req.session); // Imprime el objeto req.session para depuración
 
         res.redirect("/canciones");
     } catch (error) {
@@ -89,20 +89,43 @@ exports.getAll = async (req, res) => {
 
 
 exports.insertSong = async (req, res) => {
-    const filename = req.file.filename;
-    const filepath = req.file.path;
-
     try {
-        const query = 'INSERT INTO canciones (filename, filepath) VALUES (?, ?)';
-        await pool.query(query, [filename, filepath]);
-        // Simulación de retraso para mostrar el indicador de carga
-        setTimeout(() => {
-            console.log("se completó la carga de la cancion");
-            res.redirect('/canciones');
-        }, 2000);
+        const files = req.files; // Obtener los archivos subidos
+        const insertedSongs = []; // Almacenar los nombres de las canciones insertadas
+
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            const filename = file.filename;
+            const filepath = file.path;
+
+            const querySong = 'SELECT filename FROM canciones WHERE filename = ?';
+            const [result] = await pool.query(querySong, [filename]);
+
+            if (result.length > 0) {
+                const nombreCancion = result[0].filename;
+
+                if (nombreCancion === filename) {
+                    console.log(`La canción '${filename}' ya existe`);
+                    continue; // Saltar al siguiente archivo
+                }
+            }
+
+            const queryInsert = 'INSERT INTO canciones (filename, filepath) VALUES (?, ?)';
+            await pool.execute(queryInsert, [filename, filepath]);
+
+            insertedSongs.push(filename);
+        }
+
+        if (insertedSongs.length > 0) {
+            console.log("Se completó la carga de las canciones: ", insertedSongs);
+        } else {
+            console.log("No se insertaron nuevas canciones");
+        }
+
+        res.redirect('/canciones');
     } catch (error) {
         console.error(error);
-        res.send('Ocurrio un error del lado del servidor');
+        res.send('Ocurrió un error al momento de insertar en la base de datos');
     }
 };
 
@@ -152,22 +175,44 @@ exports.getAllAnuncios = async (req, res) => {
         res.send('Error del parte del servidor');
     }
 };
-
 exports.insertAds = async (req, res) => {
-    const filename = req.file.filename;
-    const filepath = req.file.path;
-
     try {
-        const query = 'INSERT INTO anuncios (filename, filepath) VALUES (?, ?)';
-        await pool.query(query, [filename, filepath]);
-        // Simulación de retraso para mostrar el indicador de carga
-        setTimeout(() => {
-            console.log("se completó la carga del anuncio");
-            res.redirect('/canciones');
-        }, 2000);
+        const files = req.files; // Obtener los archivos subidos (usar req.files en lugar de req.file)
+        const insertedAds = []; // Almacenar los nombres de los anuncios insertados
+
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            const filename = file.filename;
+            const filepath = file.path;
+
+            const queryAd = 'SELECT filename FROM anuncios WHERE filename = ?';
+            const [result] = await pool.execute(queryAd, [filename]);
+
+            if (result.length > 0) {
+                const nombreAnuncio = result[0].filename;
+
+                if (nombreAnuncio === filename) {
+                    console.log(`El anuncio '${filename}' ya existe`);
+                    continue; // Saltar al siguiente archivo
+                }
+            }
+
+            const queryInsert = 'INSERT INTO anuncios (filename, filepath) VALUES (?, ?)';
+            await pool.execute(queryInsert, [filename, filepath]);
+
+            insertedAds.push(filename);
+        }
+
+        if (insertedAds.length > 0) {
+            console.log("Se completó la carga de los anuncios:", insertedAds);
+        } else {
+            console.log("No se insertaron nuevos anuncios");
+        }
+
+        res.redirect('/canciones');
     } catch (error) {
         console.error(error);
-        res.send('Ocurrio un error del lado del servidor');
+        res.send('Ocurrió un error del lado del servidor');
     }
 };
 

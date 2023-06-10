@@ -6,7 +6,8 @@ const musicStorage = multer.diskStorage({
         cb(null, 'public/music');
     },
     filename: function (req, file, cb) {
-        cb(null, file.originalname);
+        // Guardar nombre de archivo
+        cb(null, `${file.originalname}`);
     }
 });
 
@@ -16,7 +17,8 @@ const adsStorage = multer.diskStorage({
         cb(null, 'public/publicidad');
     },
     filename: function (req, file, cb) {
-        cb(null, file.originalname);
+        // Guardar el nombre de archivo
+        cb(null, `${file.originalname}`);
     }
 });
 
@@ -24,6 +26,7 @@ const adsStorage = multer.diskStorage({
 const musicUpload = multer({
     storage: musicStorage,
     fileFilter: function (req, file, cb) {
+        // Restringir los tipos de archivo permitidos
         const fileExtension = file.originalname.split('.').pop();
         if (fileExtension === 'mp3' || fileExtension === 'm4a') {
             cb(null, true);
@@ -31,21 +34,21 @@ const musicUpload = multer({
             cb(new Error('Solo se permiten archivos MP3 y M4A.'), false);
         }
     }
-});
+}).array('canciones', 10); // Permitir hasta 10 archivos de música
 
 // Configuración de Multer para archivos de anuncios
 const adsUpload = multer({
     storage: adsStorage,
     fileFilter: function (req, file, cb) {
+        // Restringir los tipos de archivo permitidos
         const fileExtension = file.originalname.split('.').pop();
         if (fileExtension === 'mp3') {
             cb(null, true);
         } else {
             cb(new Error('Solo se permiten archivos MP3'), false);
         }
-        cb(null, true);
     }
-});
+}).array('anuncios', 10); // Permitir hasta 10 archivos de anuncios
 
 module.exports = {
     musicUpload: musicUpload,
