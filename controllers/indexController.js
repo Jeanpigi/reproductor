@@ -52,10 +52,6 @@ exports.login = async (req, res) => {
         if (!passwordMatch) {
             return res.send('Credenciales inválidas');
         }
-
-        req.session.user = { username: username }; // Guarda un objeto con la propiedad "username" en req.session.user
-        console.log('req.session:', req.session); // Imprime el objeto req.session para depuración
-
         res.redirect("/canciones");
     } catch (error) {
         res.send(`El error es el siguiente ${error}`);
@@ -154,7 +150,7 @@ exports.deleteSong = async (req, res) => {
     }
 };
 
-exports.getAllAds = async (req, res) => {
+exports.getAllAudios = async (req, res) => {
     try {
         const query = 'SELECT * FROM anuncios';
         const [rows] = await pool.execute(query);
@@ -165,34 +161,35 @@ exports.getAllAds = async (req, res) => {
     }
 };
 
-exports.getAllAnuncios = async (req, res) => {
+exports.getAudios = async (req, res) => {
     try {
         const query = 'SELECT * FROM anuncios';
         const [rows] = await pool.execute(query);
-        res.render('ads', { rows })
+        res.render('test', { rows })
     } catch (error) {
         console.error(error)
         res.send('Error del parte del servidor');
     }
 };
-exports.insertAds = async (req, res) => {
+
+exports.insertAudios = async (req, res) => {
     try {
         const files = req.files; // Obtener los archivos subidos (usar req.files en lugar de req.file)
-        const insertedAds = []; // Almacenar los nombres de los anuncios insertados
+        const insertedAudios = []; // Almacenar los nombres de los audios insertados
 
         for (let i = 0; i < files.length; i++) {
             const file = files[i];
             const filename = file.filename;
             const filepath = file.path;
 
-            const queryAd = 'SELECT filename FROM anuncios WHERE filename = ?';
-            const [result] = await pool.execute(queryAd, [filename]);
+            const queryAudio = 'SELECT filename FROM anuncios WHERE filename = ?';
+            const [result] = await pool.execute(queryAudio, [filename]);
 
             if (result.length > 0) {
-                const nombreAnuncio = result[0].filename;
+                const nombreAudio = result[0].filename;
 
-                if (nombreAnuncio === filename) {
-                    console.log(`El anuncio '${filename}' ya existe`);
+                if (nombreAudio === filename) {
+                    console.log(`El audio '${filename}' ya existe`);
                     continue; // Saltar al siguiente archivo
                 }
             }
@@ -200,13 +197,13 @@ exports.insertAds = async (req, res) => {
             const queryInsert = 'INSERT INTO anuncios (filename, filepath) VALUES (?, ?)';
             await pool.execute(queryInsert, [filename, filepath]);
 
-            insertedAds.push(filename);
+            insertedAudios.push(filename);
         }
 
-        if (insertedAds.length > 0) {
-            console.log("Se completó la carga de los anuncios:", insertedAds);
+        if (insertedAudios.length > 0) {
+            console.log("Se completó la carga de los audios:", insertedAudios);
         } else {
-            console.log("No se insertaron nuevos anuncios");
+            console.log("No se insertaron nuevos audios");
         }
 
         res.redirect('/canciones');
@@ -216,7 +213,7 @@ exports.insertAds = async (req, res) => {
     }
 };
 
-exports.deleteAds = async (req, res) => {
+exports.deleteAudios = async (req, res) => {
     const { id } = req.params;
     try {
         const selectQuery = 'SELECT filepath FROM anuncios WHERE id = ?';

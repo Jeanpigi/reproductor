@@ -72,6 +72,7 @@ a {
     display: grid;
     justify-content: center;
     align-items: center;
+    padding: 10px;
     height: 76vh;
 }
 
@@ -306,7 +307,7 @@ img {
     line-height: 1.1;
     background-color: #fff;
     background-image: linear-gradient(to top, #f9f9f9, #fff 33%);
-    margin: 10px;
+    margin-bottom: 10px;
 }
 
 .container__select {
@@ -429,6 +430,10 @@ select {
     visibility: hidden;
 }
 
+.ads__audio {
+    position: absolute;
+}
+
 #player-image {
     width: 200px;
     height: 200px;
@@ -495,6 +500,13 @@ select {
 
 .upload-button:hover {
     background-color: #e8531b;
+}
+
+.container_not_found {
+    justify-content: center;
+    align-content: center;
+    align-items: center;
+    display: grid;
 }
 
 /* Estilos del footer*/

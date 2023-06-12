@@ -19,9 +19,9 @@ function changeFormAction(selectedOption) {
         filePathInput.name = 'canciones';
         uploadLabel.setAttribute('for', 'canciones');
     } else if (selectedOption === 'anuncio') {
-        uploadForm.action = '/anuncios';
-        filePathInput.name = 'anuncios';
-        uploadLabel.setAttribute('for', 'anuncios');
+        uploadForm.action = '/audios';
+        filePathInput.name = 'audios';
+        uploadLabel.setAttribute('for', 'audios');
     }
 }
 

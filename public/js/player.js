@@ -4,6 +4,7 @@ const nextButton = document.getElementById('forward');
 const prevButton = document.getElementById('backward');
 const playerImage = document.getElementById('player-image');
 const audioPlayer = document.getElementById('audio-player');
+const audioAds = document.getElementById('audio-ads');
 const titulo = document.getElementById("titulo");
 const selection = document.getElementById("select");
 const iconMenu = document.getElementById("icon-menu");
@@ -53,7 +54,7 @@ const updateData = async () => {
         }
 
         // Continuar consultando la API en intervalos de tiempo
-        setTimeout(updateData, 5000); // Consultar cada 5 segundos (puedes ajustar el intervalo según tus necesidades)
+        setTimeout(updateData, 30 * 60 * 1000); // Consultar cada 30 minutes (30 * 60 * 1000 milliseconds)
     } catch (error) {
         console.error('Error:', error);
     }
@@ -99,21 +100,6 @@ const loadSong = (songIndex) => {
     }
 }
 
-const playAd = () => {
-    pauseSong(); // Pausa la canción actual
-    const adIndex = Math.floor(Math.random() * anuncios.length); // Obtén un índice aleatorio para el anuncio
-    // Cargar y reproducir el anuncio
-    audioPlayer.src = "/publicidad/" + adsData[adIndex];
-    audioPlayer.play();
-
-    // Esperar la duración del anuncio y reanudar la canción actual
-    setTimeout(() => {
-        audioPlayer.src = "/music/" + canciones[actualSong];
-        playSong(); // Reanudar la canción
-        hasPlayedAd = false;
-    }, adDuration * 1000);
-}
-
 const rotateImage = () => {
     playerImage.style.transform += 'rotate(1deg)';
     animationId = requestAnimationFrame(rotateImage);
@@ -135,14 +121,20 @@ const updateControls = () => {
     }
 }
 
+
 const updateProgress = (event) => {
     const { duration, currentTime } = event.target;
-    const percent = (currentTime / duration) * 100;
-    range.value = percent;
-    range.style.setProperty('--progress', percent);
-    document.querySelector('.start').textContent = formatTime(currentTime);
-    document.querySelector('.end').textContent = formatTime(duration);
+
+    // Verificar si duration y currentTime son números finitos
+    if (typeof duration === 'number' && typeof currentTime === 'number' && isFinite(duration) && isFinite(currentTime) && duration !== 0 && currentTime !== 0) {
+        const percent = (currentTime / duration) * 100;
+        range.value = percent;
+        range.style.setProperty('--progress', percent);
+        document.querySelector('.start').textContent = formatTime(currentTime);
+        document.querySelector('.end').textContent = formatTime(duration);
+    }
 };
+
 
 const setProgress = (event) => {
     const totalWidth = range.offsetWidth;
@@ -173,6 +165,23 @@ const pauseSong = () => {
     isRotating = false;
 }
 
+const playAd = () => {
+    let adIndex = Math.floor(Math.random() * anuncios.length); // Obtén un índice aleatorio para el anuncio
+    audioAds.src = "/audios/" + anuncios[adIndex]; // Cambiar la ruta del archivo de audio de los anuncios aquí
+  
+    audioAds.onloadedmetadata = () => {
+      pauseSong(); // Pausa la canción actual
+      audioAds.play(); // Reproducir el anuncio
+  
+      // Esperar la duración del anuncio y reanudar la canción actual
+      setTimeout(() => {
+        playSong(); // Reanudar la canción
+        hasPlayedAd = false;
+      }, audioAds.duration * 1000);
+    };
+};
+  
+  
 const changeActiveClass = (lastIndex, newIndex) => {
     const cancion = document.querySelectorAll("#select option");
     if (lastIndex !== null) {
@@ -220,7 +229,7 @@ audioPlayer.addEventListener('timeupdate', updateProgress);
 
 audioPlayer.addEventListener('ended', function () {
     // Verificar si han pasado dos minutos y no se ha mostrado el anuncio aún
-    if (audioPlayer.currentTime >= playAdInterval && !hasPlayedAd) {
+    if (audioPlayer.currentTime >= adDuration && !hasPlayedAd) {
         playAd();
         hasPlayedAd = true; // Marcar el anuncio como reproducido para evitar que se repita
     }
@@ -228,7 +237,7 @@ audioPlayer.addEventListener('ended', function () {
 });
 
 iconMenu.addEventListener("click", () => {
-    select.classList.toggle("hide");
+    selection.classList.toggle("hide");
     playerTitle.classList.toggle("hide");
 });
 
@@ -240,9 +249,6 @@ selection.addEventListener('change', () => {
 
 // Agrega el event listener 'input' para actualizar el progreso y el color de la pista
 range.addEventListener('input', updateProgress);
-
-// Agrega el event listener 'click' para cambiar la posición de reproducción
-range.removeEventListener('click', setProgress);
 
 
 // Agrega el event listener 'mousedown' para indicar que el rango está siendo arrastrado
@@ -261,6 +267,10 @@ range.addEventListener('click', (event) => {
         setProgress(event);
     }
 });
+
+// Agrega el event listener 'click' para cambiar la posición de reproducción
+range.removeEventListener('click', setProgress);
+
 
 const formatTime = (time) => {
     const minutes = Math.floor(time / 60);

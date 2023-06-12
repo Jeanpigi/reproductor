@@ -1,19 +1,19 @@
 const express = require('express');
 const router = express.Router();
 
-const { signup, login, getAllSongs, getAll, getAllAds, deleteSong, insertAds, insertSong, deleteAds } = require('../controllers/indexController');
+const { signup, login, getAllSongs, getAll, getAllAudios, deleteSong, insertAudios, insertSong, deleteAudios } = require('../controllers/indexController');
 const { adsUpload, musicUpload } = require('../utils/multerConfig');
 
-//Middlewares
+// Middlewares
 const { controlInactividad } = require('../middleware/inactividad');
 const { verificarSesion } = require('../middleware/verificacion');
 
-//Ruta principal
+// Ruta principal
 router.get('/', (req, res) => {
     res.render('player');
 });
 
-// Ruta de login y register user
+// Ruta de registro y inicio de sesión de usuario
 router.get('/signup', (req, res) => {
     res.render('signup');
 });
@@ -26,38 +26,34 @@ router.get('/login', (req, res) => {
 
 router.post('/login', login);
 
-//Rutas de las canciones
+// Rutas de canciones
 router.get('/canciones', getAll, controlInactividad);
 
 router.post('/canciones', musicUpload, insertSong, controlInactividad);
 
 router.post('/canciones/:id', deleteSong);
 
-//Ruta de los dashboard de los anuncios
+// Rutas del panel de anuncios
 // router.get('/anuncios', getAllAnuncios, controlInactividad);
 
-router.post('/anuncios', adsUpload, insertAds, controlInactividad);
+router.post('/audios', adsUpload, insertAudios, controlInactividad);
 
-router.post('/anuncios/:id', deleteAds);
+router.post('/audios/:id', deleteAudios);
 
-//Apis
+// APIs
 router.get("/api/canciones", getAllSongs);
-router.get("/api/anuncios", getAllAds);
+router.get("/api/anuncios", getAllAudios);
 
-
-//Ruta para el logout 
+// Ruta para el cierre de sesión
 router.get('/logout', (req, res) => {
-    // Destruir la sesión y redirigir al inicio de sesión
+    // Destruir la sesión y redirigir a la página de inicio de sesión
     req.session.destroy();
     res.redirect('/login');
 });
 
-
-
 // Ruta de manejo de errores 404
 router.use((req, res) => {
-    res.status(404).render('404', { mensaje: 'Pagina no encontrada' });
+    res.status(404).render('404', { mensaje: 'Página no encontrada' });
 });
-
 
 module.exports = router;

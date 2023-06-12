@@ -14,7 +14,7 @@ const musicStorage = multer.diskStorage({
 // Función de almacenamiento para archivos de anuncios
 const adsStorage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, 'public/publicidad');
+        cb(null, 'public/audios');
     },
     filename: function (req, file, cb) {
         // Guardar el nombre de archivo
@@ -34,7 +34,7 @@ const musicUpload = multer({
             cb(new Error('Solo se permiten archivos MP3 y M4A.'), false);
         }
     }
-}).array('canciones', 10); // Permitir hasta 10 archivos de música
+}).array('canciones', 30); // Permitir hasta 10 archivos de música
 
 // Configuración de Multer para archivos de anuncios
 const adsUpload = multer({
@@ -48,7 +48,7 @@ const adsUpload = multer({
             cb(new Error('Solo se permiten archivos MP3'), false);
         }
     }
-}).array('anuncios', 10); // Permitir hasta 10 archivos de anuncios
+}).array('audios', 30); // Permitir hasta 10 archivos de anuncios
 
 module.exports = {
     musicUpload: musicUpload,

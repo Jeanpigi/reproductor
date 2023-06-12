@@ -220,4 +220,4 @@ $RECYCLE.BIN/
 # End of https://www.toptal.com/developers/gitignore/api/node,macos,linux,windows,dotenv
 
 /public/music/
-/public/publicidad/
+/public/audios/

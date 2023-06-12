@@ -73,7 +73,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/js', express.static('public/js'));
 app.use('/css', express.static('public/css'));
 app.use('/music', express.static('public/music'));
-app.use('/publicidad', express.static('public/publicidad'));
+app.use('/audios', express.static(path.join(__dirname, 'public', 'audios')));
 app.use('/assets', express.static('public/assets'));
 
 //Rutas
