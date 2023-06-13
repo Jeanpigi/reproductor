@@ -79,7 +79,7 @@ a {
 
 /* Estilos de la pagina de inicio*/
 .container__index {
-    height: 330px;
+    height: 350px;
     padding: 20px;
     background-color: var(--background);
     border-radius: 10px;
@@ -192,6 +192,12 @@ a {
 
 .content_form {
     margin: 10px;
+}
+
+.register__button{
+    margin: 10px 0;
+    padding: 10px;
+    display: grid;
 }
 
 .delete-button {
