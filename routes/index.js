@@ -34,8 +34,6 @@ router.post('/canciones', musicUpload, insertSong, controlInactividad);
 router.post('/canciones/:id', deleteSong);
 
 // Rutas del panel de anuncios
-// router.get('/anuncios', getAllAnuncios, controlInactividad);
-
 router.post('/audios', adsUpload, insertAudios, controlInactividad);
 
 router.post('/audios/:id', deleteAudios);
