@@ -1,7 +1,5 @@
 const playButton = document.getElementById('play-button');
 const play = document.getElementById("play-btn");
-// const nextButton = document.getElementById('forward');
-// const prevButton = document.getElementById('backward');
 const playerImage = document.getElementById('player-image');
 const audioPlayer = document.getElementById('audio-player');
 const audioAds = document.getElementById('audio-ads');
@@ -10,6 +8,9 @@ const selection = document.getElementById("select");
 const iconMenu = document.getElementById("icon-menu");
 const playerTitle = document.getElementById('player__title');
 const range = document.getElementById('duration__range');
+
+// Establecer conexión con el servidor
+const socket = io('http://localhost:3002');
 
 const urlCanciones = '/api/canciones';
 const urlAnuncios = '/api/anuncios';
@@ -210,20 +211,43 @@ const nextSong = () => {
     }
 }
 
+// Agrega el event listener para el botón de reproducción
 playButton.addEventListener('click', () => {
     if (audioPlayer.paused) {
         if (primeraVez) {
             const randomIndex = Math.floor(Math.random() * canciones.length);
             loadSong(randomIndex);
-            playSong();
+            socket.emit('playMusic', randomIndex); // Emitir evento de reproducción al servidor
             primeraVez = false;
         } else {
             playSong();
+            socket.emit('playMusic', actualSong); // Emitir evento de reproducción al servidor
         }
     } else {
         pauseSong();
+        socket.emit('pauseMusic'); // Emitir evento de pausa al servidor
     }
 });
+
+// Resto del código...
+
+// Escuchar eventos del socket
+socket.on('playMusic', (songIndex) => {
+    // Reproducir música
+    loadSong(songIndex);
+    playSong();
+});
+
+socket.on('playAd', (adIndex) => {
+    // Reproducir anuncio
+    playAd(adIndex);
+});
+
+socket.on('pauseMusic', () => {
+    // Pausar música
+    pauseSong();
+});
+
 
 audioPlayer.addEventListener('timeupdate', updateProgress);
 
@@ -235,11 +259,6 @@ audioPlayer.addEventListener('ended', function () {
     }
     nextSong(); // Ir a la siguiente canción al finalizar la actual
 });
-
-// iconMenu.addEventListener("click", () => {
-//     selection.classList.toggle("hide");
-//     playerTitle.classList.toggle("hide");
-// });
 
 selection.addEventListener('change', () => {
     const songIndex = parseInt(selection.value);
@@ -284,8 +303,6 @@ const padTime = (time) => {
     return (time < 10 ? '0' + time : time);
 }
 
-// nextButton.addEventListener("click", nextSong);
-// prevButton.addEventListener("click", prevSong);
 
 // Llamar a la función inicialmente para cargar los datos
 updateData();

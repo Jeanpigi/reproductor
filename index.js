@@ -8,15 +8,16 @@ const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const session = require('express-session');
 const MySQLStore = require('express-mysql-session')(session);
+const http = require('http');
 
-//Rutas
+// Rutas
 const index = require("./routes/index");
 
 const app = express();
+const server = http.createServer(app);
 const port = process.env.PORT || 3002;
 
 app.use(morgan("tiny"));
-// parse application/json
 app.use(express.json());
 app.use(cors());
 app.use(compression());
@@ -57,7 +58,6 @@ app.engine(
     exphbs.create({
         defaultLayout: "main",
         extname: ".hbs",
-        // helpers: require('./lib/handlebars')
         partialsDir: __dirname + '/views/partials/',
     }).engine
 );
@@ -66,19 +66,22 @@ app.set("view engine", ".hbs");
 // Middleware para procesar datos del formulario
 app.use(express.urlencoded({ extended: true }));
 
-
 // Public
 app.use(express.static(path.join(__dirname, 'public')));
-
 app.use('/js', express.static('public/js'));
 app.use('/css', express.static('public/css'));
 app.use('/music', express.static('public/music'));
 app.use('/audios', express.static(path.join(__dirname, 'public', 'audios')));
 app.use('/assets', express.static('public/assets'));
+app.use('/socket.io', express.static(path.join(__dirname, 'node_modules/socket.io/client-dist/')));
 
-//Rutas
+// Rutas
 app.use('/', index);
 
-app.listen(port, () => {
+// Importar y configurar sockets
+const socketHandler = require('./utils/sockets');
+socketHandler(server);
+
+server.listen(port, () => {
     console.log(`Server is running on port ${port}`);
 });
