@@ -4,16 +4,12 @@ const playerImage = document.getElementById('player-image');
 const audioPlayer = document.getElementById('audio-player');
 const audioAds = document.getElementById('audio-ads');
 const titulo = document.getElementById("titulo");
-const selection = document.getElementById("select");
 const iconMenu = document.getElementById("icon-menu");
 const playerTitle = document.getElementById('player__title');
 const range = document.getElementById('duration__range');
 
 // Establecer conexión con el servidor
-const socket = io('http://localhost:3002');
-
-const urlCanciones = '/api/canciones';
-const urlAnuncios = '/api/anuncios';
+const socket = io();
 
 let canciones = [];
 let anuncios = [];
@@ -31,69 +27,19 @@ let hasPlayedAd = false; // Variable para controlar si el anuncio ya ha sido rep
 
 let isDragging = false; // Variable para controlar si el rango está siendo arrastrado
 
+range.disabled = true;
 
-const updateData = async () => {
-    try {
-        const responseSongs = await fetch(urlCanciones);
-        const responseAds = await fetch(urlAnuncios);
-        const songs = await responseSongs.json();
-        const ads = await responseAds.json();
-        const songData = songs.map(song => song.filename);
-        const adData = ads.map(ad => ad.filename);
+socket.on('canciones', ({ nombreCancion, extension }) => {
+    canciones.push(nombreCancion + extension);
+})
 
-        // Verificar si hay cambios en la lista de canciones
-        if (!arraysAreEqual(canciones, songData)) {
-            canciones = songData;
-            loadSongs();
-        }
-
-        // Verificar si hay cambios en la lista de anuncios
-        if (!arraysAreEqual(anuncios, adData)) {
-            anuncios = adData;
-            // Actualizar la lógica relacionada con los anuncios
-            // ...
-        }
-
-        // Continuar consultando la API en intervalos de tiempo
-        setTimeout(updateData, 30 * 60 * 1000); // Consultar cada 30 minutes (30 * 60 * 1000 milliseconds)
-    } catch (error) {
-        console.error('Error:', error);
-    }
-};
+socket.on('anuncios', ({ nombreAnuncio, extension }) => {
+    anuncios.push(nombreAnuncio + extension);
+});
 
 // Resto del código...
-
-// Función para verificar si dos arrays son iguales
-const arraysAreEqual = (arr1, arr2) => {
-    if (arr1.length !== arr2.length) {
-        return false;
-    }
-
-    for (let i = 0; i < arr1.length; i++) {
-        if (arr1[i] !== arr2[i]) {
-            return false;
-        }
-    }
-
-    return true;
-};
-
-const loadSongs = () => {
-    // Eliminar todas las opciones existentes antes de cargar las nuevas
-    selection.innerHTML = "";
-
-    for (let index = 0; index < canciones.length; index++) {
-        const song = canciones[index];
-        const option = document.createElement("option");
-        option.textContent = song;
-        option.value = index;
-        selection.appendChild(option);
-    }
-}
-
 const loadSong = (songIndex) => {
     if (songIndex !== actualSong) {
-        changeActiveClass(actualSong, songIndex);
         actualSong = songIndex;
         audioPlayer.src = "/music/" + canciones[songIndex];
         playSong();
@@ -122,7 +68,6 @@ const updateControls = () => {
     }
 }
 
-
 const updateProgress = (event) => {
     const { duration, currentTime } = event.target;
 
@@ -135,7 +80,6 @@ const updateProgress = (event) => {
         document.querySelector('.end').textContent = formatTime(duration);
     }
 };
-
 
 const setProgress = (event) => {
     const totalWidth = range.offsetWidth;
@@ -167,39 +111,28 @@ const pauseSong = () => {
 }
 
 const playAd = () => {
-    let adIndex = Math.floor(Math.random() * anuncios.length); // Obtén un índice aleatorio para el anuncio
-    audioAds.src = "/audios/" + anuncios[adIndex]; // Cambiar la ruta del archivo de audio de los anuncios aquí
+    let adIndex = Math.floor(Math.random() * anuncios.length);
+    audioAds.src = "/audios/" + anuncios[adIndex];
   
     audioAds.onloadedmetadata = () => {
-      pauseSong(); // Pausa la canción actual
-      audioAds.play(); // Reproducir el anuncio
+      pauseSong();
+      audioAds.play();
   
-      // Esperar la duración del anuncio y reanudar la canción actual
       setTimeout(() => {
-        playSong(); // Reanudar la canción
+        nextSong();
         hasPlayedAd = false;
+        changeSongtitle(actualSong, null); // Cambiar el título de la canción
       }, audioAds.duration * 1000);
+  
+      changeSongtitle(actualSong, adIndex); // Cambiar el título del anuncio
     };
 };
   
-  
-const changeActiveClass = (lastIndex, newIndex) => {
-    const cancion = document.querySelectorAll("#select option");
-    if (lastIndex !== null) {
-        cancion[lastIndex].classList.remove("active");
-    }
-    cancion[newIndex].classList.add("active");
-}
-
-const changeSongtitle = (songIndex) => {
-    titulo.innerText = canciones[songIndex];
-}
-
-const prevSong = () => {
-    if (actualSong > 0) {
-        loadSong(actualSong - 1);
+const changeSongtitle = (songIndex, adIndex) => {
+    if (typeof adIndex !== 'undefined' && adIndex !== null) {
+      titulo.innerText = anuncios[adIndex];
     } else {
-        loadSong(canciones.length - 1);
+      titulo.innerText = canciones[songIndex];
     }
 }
 
@@ -214,22 +147,20 @@ const nextSong = () => {
 // Agrega el event listener para el botón de reproducción
 playButton.addEventListener('click', () => {
     if (audioPlayer.paused) {
-        if (primeraVez) {
-            const randomIndex = Math.floor(Math.random() * canciones.length);
-            loadSong(randomIndex);
-            socket.emit('playMusic', randomIndex); // Emitir evento de reproducción al servidor
-            primeraVez = false;
-        } else {
-            playSong();
-            socket.emit('playMusic', actualSong); // Emitir evento de reproducción al servidor
-        }
+      if (primeraVez) {
+        const randomIndex = Math.floor(Math.random() * canciones.length);
+        loadSong(randomIndex);
+        socket.emit('playMusic', randomIndex); // Emitir evento de reproducción al servidor
+        primeraVez = false;
+      } else {
+        playSong();
+        socket.emit('playMusic', actualSong); // Emitir evento de reproducción al servidor
+      }
     } else {
-        pauseSong();
-        socket.emit('pauseMusic'); // Emitir evento de pausa al servidor
+      pauseSong();
+      socket.emit('pauseMusic'); // Emitir evento de pausa al servidor
     }
 });
-
-// Resto del código...
 
 // Escuchar eventos del socket
 socket.on('playMusic', (songIndex) => {
@@ -239,30 +170,25 @@ socket.on('playMusic', (songIndex) => {
 });
 
 socket.on('playAd', (adIndex) => {
-    // Reproducir anuncio
+    loadSong(actualSong); // Carga la canción actual para restablecer el título
     playAd(adIndex);
-});
+  });
 
 socket.on('pauseMusic', () => {
     // Pausar música
     pauseSong();
 });
 
-
 audioPlayer.addEventListener('timeupdate', updateProgress);
 
 audioPlayer.addEventListener('ended', function () {
     // Verificar si han pasado dos minutos y no se ha mostrado el anuncio aún
     if (audioPlayer.currentTime >= adDuration && !hasPlayedAd) {
-        playAd();
-        hasPlayedAd = true; // Marcar el anuncio como reproducido para evitar que se repita
+      socket.emit('playAd', Math.floor(Math.random() * anuncios.length)); // Emitir evento de reproducción de anuncio al servidor
+      hasPlayedAd = true; // Marcar el anuncio como reproducido para evitar que se repita
+    } else {
+      nextSong(); // Ir a la siguiente canción al finalizar la actual
     }
-    nextSong(); // Ir a la siguiente canción al finalizar la actual
-});
-
-selection.addEventListener('change', () => {
-    const songIndex = parseInt(selection.value);
-    loadSong(songIndex);
 });
 
 // Agrega el event listener 'input' para actualizar el progreso y el color de la pista
@@ -302,7 +228,3 @@ const padTime = (time) => {
     }
     return (time < 10 ? '0' + time : time);
 }
-
-
-// Llamar a la función inicialmente para cargar los datos
-updateData();
