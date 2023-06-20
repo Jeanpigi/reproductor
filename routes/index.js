@@ -13,6 +13,11 @@ router.get('/', (req, res) => {
     res.render('player');
 });
 
+// Ruta de Admin
+router.get('/admin', (req, res) => {
+    res.render('admin');
+});
+
 // Ruta de registro y inicio de sesión de usuario
 router.get('/signup', (req, res) => {
     res.render('signup');
