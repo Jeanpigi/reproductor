@@ -168,20 +168,20 @@ const pauseSong = () => {
 const playAd = () => {
     let adIndex = Math.floor(Math.random() * anuncios.length); // Obtén un índice aleatorio para el anuncio
     audioAds.src = "/audios/" + anuncios[adIndex]; // Cambiar la ruta del archivo de audio de los anuncios aquí
-  
+
     audioAds.onloadedmetadata = () => {
-      pauseSong(); // Pausa la canción actual
-      audioAds.play(); // Reproducir el anuncio
-  
-      // Esperar la duración del anuncio y reanudar la canción actual
-      setTimeout(() => {
-        playSong(); // Reanudar la canción
-        hasPlayedAd = false;
-      }, audioAds.duration * 1000);
+        pauseSong(); // Pausa la canción actual
+        audioAds.play(); // Reproducir el anuncio
+
+        // Esperar la duración del anuncio y reanudar la canción actual
+        setTimeout(() => {
+            playSong(); // Reanudar la canción
+            hasPlayedAd = false;
+        }, audioAds.duration * 1000);
     };
 };
-  
-  
+
+
 const changeActiveClass = (lastIndex, newIndex) => {
     const cancion = document.querySelectorAll("#select option");
     if (lastIndex !== null) {

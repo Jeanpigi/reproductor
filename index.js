@@ -7,7 +7,6 @@ const compression = require('compression');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const session = require('express-session');
-const MySQLStore = require('express-mysql-session')(session);
 const http = require('http');
 
 // Rutas
@@ -22,17 +21,6 @@ app.use(express.json());
 app.use(cors());
 app.use(compression());
 
-// Configuración de la conexión a la base de datos MySQL
-const dbConfig = {
-    host: process.env.MYSQL_HOST,
-    user: process.env.MYSQL_USER,
-    password: process.env.MYSQL_ROOT_PASSWORD,
-    database: process.env.MYSQL_DATABASE,
-};
-
-// Configurar express-session con MySQLStore
-const sessionStore = new MySQLStore(dbConfig);
-
 // Configurar express-session
 app.use(
     session({
@@ -44,12 +32,12 @@ app.use(
             sameSite: 'None',
             secure: true,
         },
-        store: sessionStore,
     })
 );
 
-// Configurar cookie-parser
-app.use(cookieParser());
+// Configurar cookie-parser con la misma clave secreta
+app.use(cookieParser(process.env.SESSION_SECRET));
+
 
 // Configuración de Handlebars como motor de plantillas
 app.set("views", path.join(__dirname, "views"));

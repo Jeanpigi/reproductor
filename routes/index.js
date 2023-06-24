@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-const { signup, login, getAllSongs, getAll, getAllAudios, deleteSong, insertAudios, insertSong, deleteAudios } = require('../controllers/indexController');
+const { signup, login, canciones, getAll, anuncios, deleteSong, insertAudios, insertSong, deleteAudios } = require('../controllers/indexController');
 const { adsUpload, musicUpload } = require('../utils/multerConfig');
 
 // Middlewares
@@ -11,6 +11,10 @@ const { verificarSesion } = require('../middleware/verificacion');
 // Ruta principal
 router.get('/', (req, res) => {
     res.render('player');
+});
+
+router.post('/stream', (req, res) => {
+    res.render('stream');
 });
 
 // Ruta de registro y inicio de sesión de usuario
@@ -27,20 +31,20 @@ router.get('/login', (req, res) => {
 router.post('/login', login);
 
 // Rutas de canciones
-router.get('/canciones', getAll, controlInactividad);
+router.get('/canciones', verificarSesion, getAll, controlInactividad);
 
-router.post('/canciones', musicUpload, insertSong, controlInactividad);
+router.post('/canciones', verificarSesion, musicUpload, insertSong, controlInactividad);
 
-router.post('/canciones/:id', deleteSong);
+router.post('/canciones/:id', verificarSesion, deleteSong);
 
 // Rutas del panel de anuncios
-router.post('/audios', adsUpload, insertAudios, controlInactividad);
+router.post('/audios', verificarSesion, adsUpload, insertAudios, controlInactividad);
 
-router.post('/audios/:id', deleteAudios);
+router.post('/audios/:id', verificarSesion, deleteAudios);
 
 // APIs
-router.get("/api/canciones", getAllSongs);
-router.get("/api/anuncios", getAllAudios);
+router.get("/api/canciones", canciones);
+router.get("/api/anuncios", anuncios);
 
 // Ruta para el cierre de sesión
 router.get('/logout', (req, res) => {

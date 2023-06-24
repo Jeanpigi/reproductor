@@ -1,31 +1,30 @@
-const bcrypt = require('bcrypt');
-const mysql = require('mysql2/promise');
-const fs = require('fs');
-require('dotenv').config();
+const {
+    checkIfUsernameExists,
+    getUserByUsername,
+    comparePasswords,
+    checkIfFileMusicExists,
+    createSong,
+    getAllSongs,
+    removeSong,
+    checkIfFileAdExists,
+    createAd,
+    getAllAds,
+    removeAd
+} = require('../database/db');
 
-const dbConfig = {
-    host: process.env.MYSQL_HOST,
-    user: process.env.MYSQL_USER,
-    password: process.env.MYSQL_ROOT_PASSWORD,
-    port: process.env.MYSQL_PORTDATABASE,
-    database: process.env.MYSQL_DATABASE
-};
-
-const pool = mysql.createPool(dbConfig);
 
 // Signup
 exports.signup = async (req, res) => {
     const { username, password } = req.body;
     try {
         // Verifica si el usuario ya existe
-        const [users] = await pool.query('SELECT * FROM users WHERE username = ?', [username]);
-        if (users.length > 0) {
+        const usernameExists = await checkIfUsernameExists(username);
+        if (usernameExists) {
             return res.send('El nombre de usuario ya está en uso');
         }
 
         // Crea un nuevo usuario
-        const hashedPassword = await bcrypt.hash(password, 10);
-        await pool.query('INSERT INTO users (username, password) VALUES (?, ?)', [username, hashedPassword]);
+        await createUser(username, password);
 
         // Guardar el usuario en la sesión
         req.session.user = { username };
@@ -41,41 +40,42 @@ exports.signup = async (req, res) => {
 exports.login = async (req, res) => {
     const { username, password } = req.body;
     try {
-        // Verifica si el usuario existe
-        const [users] = await pool.query('SELECT * FROM users WHERE username = ?', [username]);
-        if (users.length === 0) {
-            return res.send('El usuario no existe');
+        // Obtener el usuario por nombre de usuario
+        const user = await getUserByUsername(username);
+        if (!user) {
+            return res.send('El nombre de usuario o la contraseña son incorrectos');
         }
 
-        // Compara la contraseña ingresada con el hash almacenado
-        const passwordMatch = await bcrypt.compare(password, users[0].password);
-        if (!passwordMatch) {
-            return res.send('Credenciales inválidas');
+        // Comparar las contraseñas
+        const isPasswordCorrect = await comparePasswords(password, user[0].password);
+        if (!isPasswordCorrect) {
+            return res.send('El nombre de usuario o la contraseña son incorrectos');
         }
-        res.redirect("/canciones");
+
+        // Guardar el usuario en la sesión
+        console.log(username);
+        req.session.user = { username };
+
+        res.redirect('/canciones');
     } catch (error) {
-        res.send(`El error es el siguiente ${error}`);
+        res.send(`Error que se está presentando es ${error}`);
     }
 };
 
 
-exports.getAllSongs = async (req, res) => {
+exports.canciones = async (req, res) => {
     try {
-        const query = 'SELECT * FROM canciones';
-        const [rows] = await pool.execute(query);
-        res.json(rows);
+        const canciones = await getAllSongs();
+        res.json(canciones);
     } catch (error) {
-        console.error(error)
-        res.send('Error del parte del servidor');
+        res.send(`Error del parte del servidor ${error}`);
     }
 };
 
 exports.getAll = async (req, res) => {
     try {
-        const queryCanciones = 'SELECT * FROM canciones';
-        const [canciones] = await pool.execute(queryCanciones);
-        const queryAnuncios = 'SELECT * FROM anuncios';
-        const [anuncios] = await pool.execute(queryAnuncios);
+        const canciones = await getAllSongs();
+        const anuncios = await getAllAds();
         res.render('songs', { canciones, anuncios });
     } catch (error) {
         console.error(error)
@@ -94,20 +94,14 @@ exports.insertSong = async (req, res) => {
             const filename = file.filename;
             const filepath = file.path;
 
-            const querySong = 'SELECT filename FROM canciones WHERE filename = ?';
-            const [result] = await pool.query(querySong, [filename]);
-
-            if (result.length > 0) {
-                const nombreCancion = result[0].filename;
-
-                if (nombreCancion === filename) {
-                    console.log(`La canción '${filename}' ya existe`);
-                    continue; // Saltar al siguiente archivo
-                }
+            // Verifica si la cancion ya existe
+            const songExists = await checkIfFileMusicExists(filename);
+            if (songExists) {
+                return res.send(`La canción '${filename}' ya existe`);
             }
 
-            const queryInsert = 'INSERT INTO canciones (filename, filepath) VALUES (?, ?)';
-            await pool.execute(queryInsert, [filename, filepath]);
+            // Crea un nuevo usuario
+            await createSong(filename, filepath);
 
             insertedSongs.push(filename);
         }
@@ -128,12 +122,8 @@ exports.insertSong = async (req, res) => {
 exports.deleteSong = async (req, res) => {
     const { id } = req.params;
     try {
-        const selectQuery = 'SELECT filepath FROM canciones WHERE id = ?';
-        const [result] = await pool.execute(selectQuery, [id]);
-        const filepath = result[0].filepath;
-
-        const deleteQuery = 'DELETE FROM canciones WHERE id = ?';
-        await pool.execute(deleteQuery, [id]);
+        const song = await removeSong(id);
+        const filepath = song[0].filepath;
 
         fs.unlink(filepath, (err) => {
             if (err) {
@@ -150,11 +140,10 @@ exports.deleteSong = async (req, res) => {
     }
 };
 
-exports.getAllAudios = async (req, res) => {
+exports.anuncios = async (req, res) => {
     try {
-        const query = 'SELECT * FROM anuncios';
-        const [rows] = await pool.execute(query);
-        res.json(rows);
+        const anuncios = await getAllAds();
+        res.json(anuncios);
     } catch (error) {
         console.error(error)
         res.send('Error del parte del servidor');
@@ -182,20 +171,14 @@ exports.insertAudios = async (req, res) => {
             const filename = file.filename;
             const filepath = file.path;
 
-            const queryAudio = 'SELECT filename FROM anuncios WHERE filename = ?';
-            const [result] = await pool.execute(queryAudio, [filename]);
-
-            if (result.length > 0) {
-                const nombreAudio = result[0].filename;
-
-                if (nombreAudio === filename) {
-                    console.log(`El audio '${filename}' ya existe`);
-                    continue; // Saltar al siguiente archivo
-                }
+            // Verifica si la cancion ya existe
+            const adExists = await checkIfFileAdExists(filename);
+            if (adExists) {
+                return res.send(`El anuncio '${filename}' ya existe`);
             }
 
-            const queryInsert = 'INSERT INTO anuncios (filename, filepath) VALUES (?, ?)';
-            await pool.execute(queryInsert, [filename, filepath]);
+            // Crea un nuevo usuario
+            await createAd(filename, filepath);
 
             insertedAudios.push(filename);
         }
@@ -216,12 +199,8 @@ exports.insertAudios = async (req, res) => {
 exports.deleteAudios = async (req, res) => {
     const { id } = req.params;
     try {
-        const selectQuery = 'SELECT filepath FROM anuncios WHERE id = ?';
-        const [result] = await pool.execute(selectQuery, [id]);
-        const filepath = result[0].filepath;
-
-        const deleteQuery = 'DELETE FROM anuncios WHERE id = ?';
-        await pool.execute(deleteQuery, [id]);
+        const anuncio = await removeAd(id);
+        const filepath = anuncio[0].filepath;
 
         fs.unlink(filepath, (err) => {
             if (err) {
