@@ -13,8 +13,13 @@ router.get('/', (req, res) => {
     res.render('player');
 });
 
-router.post('/stream', (req, res) => {
+router.get('/stream', (req, res) => {
     res.render('stream');
+});
+
+// Ruta de Admin
+router.get('/admin', (req, res) => {
+    res.render('admin');
 });
 
 // Ruta de registro y inicio de sesión de usuario
