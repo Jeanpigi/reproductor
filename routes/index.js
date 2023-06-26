@@ -1,8 +1,23 @@
 const express = require('express');
 const router = express.Router();
+const fs = require('fs');
+const path = require('path');
 
-const { signup, login, canciones, getAll, anuncios, deleteSong, insertAudios, insertSong, deleteAudios } = require('../controllers/indexController');
-const { adsUpload, musicUpload } = require('../utils/multerConfig');
+const { signup,
+    login,
+    canciones,
+    getAll,
+    anuncios,
+    deleteSong,
+    insertAudios,
+    insertSong,
+    deleteAudios
+} = require('../controllers/indexController');
+
+const {
+    adsUpload,
+    musicUpload
+} = require('../utils/multerConfig');
 
 // Middlewares
 const { controlInactividad } = require('../middleware/inactividad');
@@ -14,20 +29,32 @@ router.get('/', (req, res) => {
 });
 
 router.get('/stream', (req, res) => {
-    res.render('stream');
+    const musicFolderPath = path.join(__dirname, '..', 'public', 'music');
+
+    // Leer el contenido de la carpeta de música
+    fs.readdir(musicFolderPath, (err, files) => {
+        if (err) {
+            console.error('Error al leer la carpeta de música:', err);
+            res.status(500).send('Error en el servidor');
+            return;
+        }
+
+        // Renderizar la vista stream.hbs y pasar la lista de archivos
+        res.render('stream', { layout: false });
+    });
 });
 
 // Ruta de Admin
-router.get('/admin', (req, res) => {
+router.get('/admin', verificarSesion, (req, res) => {
     res.render('admin');
-});
+}, controlInactividad);
 
 // Ruta de registro y inicio de sesión de usuario
-router.get('/signup', (req, res) => {
+router.get('/signup', verificarSesion, (req, res) => {
     res.render('signup');
 });
 
-router.post('/signup', signup);
+router.post('/signup', verificarSesion, signup);
 
 router.get('/login', (req, res) => {
     res.render('login');
@@ -40,12 +67,12 @@ router.get('/canciones', verificarSesion, getAll, controlInactividad);
 
 router.post('/canciones', verificarSesion, musicUpload, insertSong, controlInactividad);
 
-router.post('/canciones/:id', verificarSesion, deleteSong);
+router.post('/canciones/:id', verificarSesion, deleteSong, controlInactividad);
 
 // Rutas del panel de anuncios
 router.post('/audios', verificarSesion, adsUpload, insertAudios, controlInactividad);
 
-router.post('/audios/:id', verificarSesion, deleteAudios);
+router.post('/audios/:id', verificarSesion, deleteAudios, controlInactividad);
 
 // APIs
 router.get("/api/canciones", canciones);
