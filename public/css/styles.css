@@ -194,7 +194,7 @@ a {
     margin: 10px;
 }
 
-.register__button{
+.register__button {
     margin: 10px 0;
     padding: 10px;
     display: grid;
@@ -327,14 +327,14 @@ select {
 }
 
 
-.custom-select::after {
+/* .custom-select::after {
     content: "";
     justify-self: end;
     width: 0.8em;
     height: 0.5em;
     background-color: var(--select-arrow);
     clip-path: polygon(100% 0%, 0 0%, 50% 100%);
-}
+} */
 
 .custom-select select {
     appearance: none;
@@ -349,6 +349,7 @@ select {
     line-height: inherit;
     z-index: 1;
     outline: none;
+    text-align: center;
 }
 
 .custom-select select:focus+.focus {
@@ -536,4 +537,17 @@ p {
     font-size: 2rem;
     font-weight: 800;
     padding: 19px;
+}
+
+
+/* Estilos para pantallas de ancho máximo de 420px (dispositivos móviles) */
+@media screen and (max-width: 420px) {
+    .container {
+        height: auto;
+        /* Sobrescribes el height a "auto" para eliminarlo */
+    }
+
+    .content__player {
+        grid-template-columns: 1fr;
+    }
 }

@@ -1,7 +1,5 @@
 const express = require('express');
 const router = express.Router();
-const fs = require('fs');
-const path = require('path');
 
 const { signup,
     login,
@@ -26,22 +24,6 @@ const { verificarSesion } = require('../middleware/verificacion');
 // Ruta principal
 router.get('/', (req, res) => {
     res.render('player');
-});
-
-router.get('/stream', (req, res) => {
-    const musicFolderPath = path.join(__dirname, '..', 'public', 'music');
-
-    // Leer el contenido de la carpeta de música
-    fs.readdir(musicFolderPath, (err, files) => {
-        if (err) {
-            console.error('Error al leer la carpeta de música:', err);
-            res.status(500).send('Error en el servidor');
-            return;
-        }
-
-        // Renderizar la vista stream.hbs y pasar la lista de archivos
-        res.render('stream', { layout: false });
-    });
 });
 
 // Ruta de Admin

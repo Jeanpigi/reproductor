@@ -1,5 +1,6 @@
 const {
     checkIfUsernameExists,
+    createUser,
     getUserByUsername,
     comparePasswords,
     checkIfFileMusicExists,

@@ -35,17 +35,18 @@ module.exports = function (server) {
 
     // Emitir el evento 'playMusic' cuando se reproduzca una canción en el servidor
     socket.on('playMusic', (songIndex) => {
-      io.emit('playMusic', songIndex);
+      socket.broadcast.emit('playMusic', songIndex);
     });
+
 
     // Emitir el evento 'pauseMusic' cuando se pause la canción en el servidor
     socket.on('pauseMusic', () => {
-      io.emit('pauseMusic');
+      socket.broadcast.emit('pauseMusic');
     });
 
     // Emitir el evento 'playAd' cuando se reproduzca un anuncio en el servidor
     socket.on('playAd', (adIndex) => {
-      io.emit('playAd', adIndex);
+      socket.broadcast.emit('playAd', adIndex);
     });
 
     // Manejar eventos de desconexión de los clientes

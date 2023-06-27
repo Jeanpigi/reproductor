@@ -7,7 +7,7 @@ const titulo = document.getElementById("titulo");
 const range = document.getElementById('duration__range');
 
 // Establecer conexión con el servidor
-const socket = io();
+let socket = io();
 
 let canciones = [];
 let anuncios = [];
@@ -29,10 +29,9 @@ range.disabled = true;
 
 let adIndex = 0;
 
-
 socket.on('canciones', ({ nombreCancion, extension }) => {
     canciones.push(nombreCancion + extension);
-})
+});
 
 socket.on('anuncios', ({ nombreAnuncio, extension }) => {
     anuncios.push(nombreAnuncio + extension);
@@ -46,7 +45,7 @@ socket.on('playMusic', (songIndex) => {
 });
 
 socket.on('playAd', (adIndex) => {
-    loadSong(actualSong); // Carga la canción actual para restablecer el título
+    loadSong(actualSong);
     playAd(adIndex);
 });
 
@@ -55,7 +54,6 @@ socket.on('pauseMusic', () => {
     pauseSong();
 });
 
-// Resto del código...
 const loadSong = (songIndex) => {
     if (songIndex !== actualSong) {
         actualSong = songIndex;
@@ -63,7 +61,7 @@ const loadSong = (songIndex) => {
         playSong();
         changeSongtitle(songIndex);
     }
-}
+};
 
 const rotateImage = () => {
     playerImage.style.transform += 'rotate(1deg)';
@@ -84,18 +82,22 @@ const updateControls = () => {
         play.classList.remove("fa-play");
         playButton.classList.add("orange");
     }
-}
+};
 
 socket.on('sync', (currentTime) => {
     // Recibir mensaje de sincronización y establecer el tiempo de reproducción del audio
     audioPlayer.currentTime = parseFloat(currentTime);
 });
 
-const updateProgress = (event) => {
-    const { duration, currentTime } = event.target;
+const updateProgress = () => {
+    const { duration, currentTime } = audioPlayer;
 
     // Verificar si duration y currentTime son números finitos
-    if (typeof duration === 'number' && typeof currentTime === 'number' && isFinite(duration) && isFinite(currentTime) && duration !== 0 && currentTime !== 0) {
+    if (
+        Number.isFinite(duration) &&
+        Number.isFinite(currentTime) &&
+        duration !== 0
+    ) {
         const percent = (currentTime / duration) * 100;
         range.value = percent;
         range.style.setProperty('--progress', percent);
@@ -124,16 +126,16 @@ const playSong = () => {
             isRotating = true;
         }
     }
-}
+};
 
 const pauseSong = () => {
     audioPlayer.pause();
     updateControls();
     stopRotation();
     isRotating = false;
-}
+};
 
-const playAd = () => {
+const playAd = (adIndex) => {
     audioAds.src = "/audios/" + anuncios[adIndex];
 
     audioAds.onloadedmetadata = () => {
@@ -149,9 +151,10 @@ const playAd = () => {
         changeSongtitle(actualSong, adIndex); // Cambiar el título del anuncio
     };
 
-    adIndex++; // Incrementar el índice para el siguiente anuncio
-    if (adIndex >= anuncios.length) {
+    if (adIndex + 1 >= anuncios.length) {
         adIndex = 0; // Si se alcanza el final de la lista de anuncios, volver al inicio
+    } else {
+        adIndex++; // Incrementar el índice para el siguiente anuncio
     }
 };
 
@@ -162,7 +165,7 @@ const changeSongtitle = (songIndex, adIndex) => {
     } else {
         titulo.innerText = canciones[songIndex];
     }
-}
+};
 
 const nextSong = () => {
     if (actualSong < canciones.length - 1) {
@@ -170,7 +173,7 @@ const nextSong = () => {
     } else {
         loadSong(0);
     }
-}
+};
 
 // Agrega el event listener para el botón de reproducción
 playButton.addEventListener('click', () => {
@@ -190,34 +193,12 @@ playButton.addEventListener('click', () => {
     }
 });
 
-// Asegurarse de que el elemento de audio esté cargado
-audioPlayer.addEventListener('canplay', () => {
-    if (audioPlayer.paused) {
-        if (primeraVez) {
-            const randomIndex = Math.floor(Math.random() * canciones.length);
-            loadSong(randomIndex);
-            socket.emit('playMusic', randomIndex); // Emitir evento de reproducción al servidor
-            primeraVez = false;
-        } else {
-            playSong();
-            socket.emit('playMusic', actualSong); // Emitir evento de reproducción al servidor
-        }
-    } else {
-        pauseSong();
-        socket.emit('pauseMusic'); // Emitir evento de pausa al servidor
-    }
-});
-
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('Inicio de la página');
-});
-
 audioPlayer.addEventListener('timeupdate', updateProgress);
 
 audioPlayer.addEventListener('ended', function () {
     // Verificar si han pasado dos minutos y no se ha mostrado el anuncio aún
     if (audioPlayer.currentTime >= adDuration && !hasPlayedAd) {
-        playAd();
+        playAd(adIndex);
         hasPlayedAd = true; // Marcar el anuncio como reproducido para evitar que se repita
     } else {
         nextSong(); // Ir a la siguiente canción al finalizar la actual
@@ -226,7 +207,6 @@ audioPlayer.addEventListener('ended', function () {
 
 // Agrega el event listener 'input' para actualizar el progreso y el color de la pista
 range.addEventListener('input', updateProgress);
-
 
 // Agrega el event listener 'mousedown' para indicar que el rango está siendo arrastrado
 range.addEventListener('mousedown', () => {
@@ -245,25 +225,16 @@ range.addEventListener('click', (event) => {
     }
 });
 
-// Agrega el event listener 'click' para cambiar la posición de reproducción
-range.removeEventListener('click', setProgress);
-
-document.addEventListener('DOMContentLoaded', () => {
-    // Solicitar permiso para la reproducción automática
-    audioPlayer.autoplay = true;
-    playSong();
-});
-
-
 const formatTime = (time) => {
     const minutes = Math.floor(time / 60);
     const seconds = Math.floor(time % 60);
     return padTime(minutes) + ':' + padTime(seconds);
-}
+};
 
 const padTime = (time) => {
     if (typeof time !== 'number') {
         return time; // Si el tiempo no es un número, devuelve el valor sin modificar
     }
     return (time < 10 ? '0' + time : time);
-}
+};
+

@@ -70,6 +70,7 @@ app.use('/', index);
 const socketHandler = require('./utils/sockets');
 socketHandler(server);
 
+
 server.listen(port, () => {
     console.log(`Server is running on port ${port}`);
 });
