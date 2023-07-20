@@ -14,7 +14,7 @@ const index = require("./routes/index");
 
 const app = express();
 const server = http.createServer(app);
-const port = process.env.PORT || 3002;
+const port = process.env.PORT || 3005;
 
 app.use(morgan("tiny"));
 app.use(express.json());
@@ -37,7 +37,6 @@ app.use(
 
 // Configurar cookie-parser con la misma clave secreta
 app.use(cookieParser(process.env.SESSION_SECRET));
-
 
 // Configuración de Handlebars como motor de plantillas
 app.set("views", path.join(__dirname, "views"));

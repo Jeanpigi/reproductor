@@ -1,4 +1,35 @@
-<audio id="audioPlayer" controls>
-    <source src="http://localhost:8000/stream" type="audio/mpeg">
-    Tu navegador no admite la reproducción de audio.
+<audio id="audioPlayer" controls="" autoplay="true">
 </audio>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.3/howler.js"
+    integrity="sha512-dMiBqqEV5i3KqpAdsgQSSZ72DnNib7otY0X+b/Tnn1EmLym1dxuZ19csdZqBnfDniKd9bmNtzStQzuMrIa5Ngw=="
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script>
+    var sound = new Howl({
+        src: ['http://localhost:3002/'],
+        html5: true,
+        onplayerror: function () {
+            console.log('Error al reproducir el audio');
+        }
+    });
+
+    sound.play();
+
+    // Obtén la referencia al elemento audio
+    var audioPlayer = document.getElementById('audioPlayer');
+
+    // Escucha el evento "play" del elemento audio y reproduce el audio de Howler
+    audioPlayer.addEventListener('play', function () {
+        sound.play();
+    });
+
+    // Escucha el evento "pause" del elemento audio y pausa el audio de Howler
+    audioPlayer.addEventListener('pause', function () {
+        sound.pause();
+    });
+
+    // Escucha el evento "ended" del elemento audio y detiene el audio de Howler
+    audioPlayer.addEventListener('ended', function () {
+        sound.stop();
+    });
+</script>

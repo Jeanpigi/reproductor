@@ -134,7 +134,7 @@ const getAllAds = async () => {
 
 const removeAd = async (id) => {
     try {
-        const [adExist] = await pool.execute('SELECT filepath FROM anuncios WHERE id = ?', [id]);
+        const [adExist] = await pool.execute('SELECT * FROM anuncios WHERE id = ?', [id]);
         if (!adExist) {
             console.log('El anuncio no existe');
         }

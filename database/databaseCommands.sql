@@ -21,4 +21,14 @@ CREATE TABLE anuncios (
   filepath VARCHAR(255)
 );
 
-show tables;
+-- formas de ingresar a la base de datos mediante docker
+
+docker exec -it mysql sh
+
+mysql -u root -p 
+
+show databases;
+
+use reproductor;
+
+shwo tables;

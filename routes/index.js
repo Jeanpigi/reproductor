@@ -14,7 +14,7 @@ const { signup,
 
 const {
     adsUpload,
-    musicUpload
+    musicUpload,
 } = require('../utils/multerConfig');
 
 // Middlewares
@@ -27,9 +27,9 @@ router.get('/', (req, res) => {
 });
 
 // Ruta de Admin
-router.get('/admin', verificarSesion, (req, res) => {
-    res.render('admin');
-}, controlInactividad);
+router.get('/stream', (req, res) => {
+    res.render('stream', { layout: false });
+});
 
 // Ruta de registro y inicio de sesión de usuario
 router.get('/signup', verificarSesion, (req, res) => {

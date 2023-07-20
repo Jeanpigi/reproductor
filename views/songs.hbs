@@ -25,7 +25,8 @@
                     <div class="custom-select">
                         <select class="upload-select" name="fileType" id="fileTypeSelect"
                             onchange="changeFormAction(this.value)">
-                            <option value="cancion" selected>Canción</option>
+                            <option value="" selected>Seleccione una opción</option>
+                            <option value="cancion">Canción</option>
                             <option value="anuncio">Anuncio</option>
                         </select>
                     </div>
@@ -36,6 +37,13 @@
                         Cargar
                     </button>
                 </form>
+                <div class="content_logout">
+                    <form action="/logout" method="GET">
+                        <button class="logout-button" type="submit">
+                            Cerrar Session
+                        </button>
+                    </form>
+                </div>
                 <script defer src="/js/loadFile.js"></script>
             </div>
         </div>
@@ -44,7 +52,7 @@
         <h1>Anuncios:</h1>
         <div class="content__song">
             {{#each anuncios}}
-            <form action="/anuncios/{{this.id}}" method="POST" class="delete-form">
+            <form action="/audios/{{this.id}}" method="POST" class="delete-form">
                 <div class="content_form">
                     <span class="song-title">{{this.filename}}</span>
                     <button class="delete-button" type="submit" onclick="confirmDelete(event)">

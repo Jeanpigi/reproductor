@@ -1,6 +1,6 @@
 const verificarSesion = (req, res, next) => {
     console.log('Middleware de verificación de sesión activado');
-    console.log(req.session.user);
+    console.log(req.session);
 
     if (!req.session.user) {
         // El usuario no tiene una sesión activa, permitir el acceso a la siguiente ruta

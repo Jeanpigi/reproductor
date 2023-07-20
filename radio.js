@@ -2,7 +2,7 @@ const express = require('express');
 const app = express();
 const http = require('http').createServer(app);
 const io = require('socket.io')(http);
-const { Howl, Howler } = require('howler');
+const { Howl } = require('howler');
 const fs = require('fs');
 const path = require('path');
 
@@ -20,7 +20,9 @@ app.use(express.static('public'));
 
 app.get('/stream', (req, res) => {
     if (shouldPlayAd()) {
-        const adFilePath = path.join(adsFolder, adPlaylist[currentAdIndex]);
+        let adFilePath = path.join(adsFolder, adPlaylist[currentAdIndex]);
+
+        console.log(adFilePath);
 
         const adSound = new Howl({
             src: [adFilePath],
@@ -49,7 +51,9 @@ app.get('/stream', (req, res) => {
             console.log('Anuncio terminado');
         });
     } else {
-        const musicFilePath = path.join(musicFolder, musicPlaylist[currentSongIndex]);
+        let musicFilePath = path.join(musicFolder, musicPlaylist[currentSongIndex]);
+
+        console.log(musicFilePath);
 
         const musicSound = new Howl({
             src: [musicFilePath],
@@ -103,7 +107,7 @@ function playNextSong() {
         currentSongIndex = 0;
     }
 
-    const musicFilePath = path.join(musicFolder, musicPlaylist[currentSongIndex]);
+    let musicFilePath = path.join(musicFolder, musicPlaylist[currentSongIndex]);
     console.log('Índice actual:', currentSongIndex);
     console.log('Archivo de música:', musicFilePath);
 

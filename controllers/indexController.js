@@ -13,6 +13,8 @@ const {
     removeAd
 } = require('../database/db');
 
+const fs = require('fs');
+
 
 // Signup
 exports.signup = async (req, res) => {
@@ -54,7 +56,6 @@ exports.login = async (req, res) => {
         }
 
         // Guardar el usuario en la sesión
-        console.log(username);
         req.session.user = { username };
 
         res.redirect('/canciones');
@@ -124,17 +125,22 @@ exports.deleteSong = async (req, res) => {
     const { id } = req.params;
     try {
         const song = await removeSong(id);
-        const filepath = song[0].filepath;
+        if (song) {
+            const filepath = song[0].filepath;
 
-        fs.unlink(filepath, (err) => {
-            if (err) {
-                console.error(err);
-            } else {
-                console.log('Archivo eliminado exitosamente');
+            fs.unlink(filepath, (err) => {
+                if (err) {
+                    console.error(err);
+                } else {
+                    console.log('Archivo eliminado exitosamente');
 
-            }
-        });
-        res.redirect("/canciones");
+                }
+            });
+            res.redirect("/canciones");
+        } else {
+            console.log('La cancion no existe');
+        }
+
     } catch (error) {
         console.error(error);
         res.send('Ha ocurrido un error del lado del servidor');
@@ -201,19 +207,23 @@ exports.deleteAudios = async (req, res) => {
     const { id } = req.params;
     try {
         const anuncio = await removeAd(id);
-        const filepath = anuncio[0].filepath;
+        if (anuncio) {
+            const filepath = anuncio[0].filepath;
 
-        fs.unlink(filepath, (err) => {
-            if (err) {
-                console.error(err);
-            } else {
-                console.log('Archivo eliminado exitosamente');
-            }
-        });
-        res.redirect("/canciones");
+            fs.unlink(filepath, (err) => {
+                if (err) {
+                    console.error(err);
+                } else {
+                    console.log('Archivo eliminado exitosamente');
+                }
+            });
+            res.redirect("/canciones");
+        } else {
+            console.log('No existe el anuncio');
+        }
+
     } catch (error) {
         console.error(error);
         res.send('Ha ocurrido un error del lado del servidor');
     }
 };
-
