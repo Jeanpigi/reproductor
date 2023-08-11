@@ -56,11 +56,14 @@ socket.on("pauseMusic", () => {
   pauseSong();
 });
 
+function getRandomSongIndex() {
+  return Math.floor(Math.random() * canciones.length);
+}
+
 const loadSong = (songIndex) => {
   if (songIndex !== actualSong) {
     actualSong = songIndex;
-    const songSrc = "/music/" + canciones[songIndex];
-    audioPlayer.src = songSrc;
+    audioPlayer.src = "/music/" + canciones[songIndex];
     playSong();
     changeSongtitle(songIndex);
   }
@@ -120,10 +123,8 @@ const playSong = () => {
   if (actualSong !== null) {
     if (audioPlayer.currentTime > 0) {
       audioPlayer.play();
-      sound.play(); // Iniciar reproducción en Howler.js
     } else {
       audioPlayer.play();
-      sound.play(); // Iniciar reproducción en Howler.js
     }
     updateControls();
     if (!isRotating) {
@@ -186,25 +187,16 @@ const changeSongtitle = (songIndex, adIndex) => {
 };
 
 const nextSong = () => {
-  if (actualSong < canciones.length - 1) {
-    loadSong(actualSong + 1);
-  } else {
-    loadSong(0);
-  }
+  const randomIndex = getRandomSongIndex();
+  loadSong(randomIndex);
 };
 
 // Agrega el event listener para el botón de reproducción
 playButton.addEventListener("click", () => {
   if (audioPlayer.paused) {
-    if (primeraVez) {
-      const randomIndex = Math.floor(Math.random() * canciones.length);
-      loadSong(randomIndex);
-      socket.emit("playMusic", randomIndex); // Emitir evento de reproducción al servidor
-      primeraVez = false;
-    } else {
-      playSong();
-      socket.emit("playMusic", actualSong); // Emitir evento de reproducción al servidor
-    }
+    const randomIndex = getRandomSongIndex();
+    loadSong(randomIndex);
+    socket.emit("playMusic", randomIndex); // Emitir evento de reproducción al servidor
   } else {
     pauseSong();
     socket.emit("pauseMusic"); // Emitir evento de pausa al servidor
