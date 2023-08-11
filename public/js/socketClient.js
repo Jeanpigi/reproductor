@@ -31,18 +31,6 @@ range.disabled = true;
 
 let adIndex = 0;
 
-// Crear instancia de Howl para reproducir canciones
-let sound = new Howl({
-  src: [], // Se proporcionará la ruta correcta en el evento playMusic
-  html5: true,
-  onplayerror: function () {
-    console.log("Error al reproducir el audio");
-  },
-  onend: function () {
-    nextSong();
-  },
-});
-
 socket.on("canciones", ({ nombreCancion, extension }) => {
   canciones.push(nombreCancion + extension);
 });
@@ -73,8 +61,6 @@ const loadSong = (songIndex) => {
     actualSong = songIndex;
     const songSrc = "/music/" + canciones[songIndex];
     audioPlayer.src = songSrc;
-    sound.unload(); // Descargar canción anterior antes de cargar una nueva
-    sound.load({ src: [songSrc] }); // Cargar la nueva canción en Howler.js
     playSong();
     changeSongtitle(songIndex);
   }
@@ -149,7 +135,6 @@ const playSong = () => {
 
 const pauseSong = () => {
   audioPlayer.pause();
-  sound.pause();
   updateControls();
   stopRotation();
   isRotating = false;
