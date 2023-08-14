@@ -22,7 +22,9 @@ let animationId; // Declaración de la variable animationId
 // esta variable permite reproducir la canción aleaotoriamente la primera vez
 let primeraVez = true;
 
-const adDuration = 120; // Duración del anuncio en segundos (2 minutos)
+// const adDuration = 120; // Duración del anuncio en segundos (2 minutos)
+const adDuration = 7200; // Duración del anuncio en segundos (2 horas)
+
 let hasPlayedAd = false; // Variable para controlar si el anuncio ya ha sido reproducido
 
 let isDragging = false; // Variable para controlar si el rango está siendo arrastrado

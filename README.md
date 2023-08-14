@@ -24,28 +24,47 @@ Antes de ejecutar la aplicación, asegúrate de tener instalado lo siguiente:
    ```bash
    git clone https://github.com/tuusuario/reproductor-musica.git
 
+   ```
+
 2. Ve al directorio del proyecto:
 
    ```bash
    cd reproductor-musica
+
+   ```
 
 3. Instala las dependencias:
 
    ```bash
    npm install
 
+   ```
+
 4. Configura las variables de entorno:
 
-    Crea un archivo .env en el directorio raíz del proyecto
-    Copia el contenido del archivo .env.example y pégalo en el archivo .env
-    Completa las variables de entorno con tus propios valores
+   Crea un archivo .env en el directorio raíz del proyecto
+   Copia el contenido del archivo .env.example y pégalo en el archivo .env
+   Completa las variables de entorno con tus propios valores
+
+### Nota
+
+los servicios se dividen en dos, en el reproductor y la radio online, dependiendo del servicio que se requiera utilizar, asi mismo se debe correr el servidor, de igual manera puedes correr ambos servicios al mismo tiempo.
 
 5. Inicia el servidor:
 
    ```bash
-   npm start
+      npm run start
+   ```
 
 6. Accede a la aplicación en tu navegador web en la siguiente URL: http://localhost:3000
+
+7. Iniciar el servidor de radio:
+
+```bash
+  npm run radio
+```
+
+8. Accede a la aplicación de radio en tu navegador web en la siguiente URL: http://localhost:8080
 
 ## Uso
 
