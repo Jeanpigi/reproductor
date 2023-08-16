@@ -61,10 +61,10 @@ los servicios se dividen en dos, en el reproductor y la radio online, dependiend
 7. Iniciar el servidor de radio:
 
 ```bash
-  npm run radio
+  npm run stream
 ```
 
-8. Accede a la aplicación de radio en tu navegador web en la siguiente URL: http://localhost:8080
+8. Accede a la aplicación de radio en tu navegador web en la siguiente URL: http://localhost:3006
 
 ## Uso
 
