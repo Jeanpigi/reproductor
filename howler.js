@@ -25,9 +25,6 @@ app.get("/stream", (req, res) => {
     const adSound = new Howl({
       src: [adFilePath],
       html5: true,
-      autoplay: true,
-      loop: true,
-      rate: 1.0,
     });
 
     const adStream = fs.createReadStream(adFilePath);
@@ -57,8 +54,6 @@ app.get("/stream", (req, res) => {
     const musicSound = new Howl({
       src: [musicFilePath],
       html5: true,
-      autoplay: true,
-      rate: 1.0,
     });
 
     const musicStream = fs.createReadStream(musicFilePath);
@@ -109,8 +104,6 @@ function playNextSong() {
   const sound = new Howl({
     src: [musicFilePath],
     html5: true,
-    autoplay: true,
-    rate: 1.0,
     onend: () => {
       playNextSong();
     },

@@ -196,9 +196,15 @@ const nextSong = () => {
 // Agrega el event listener para el botón de reproducción
 playButton.addEventListener("click", () => {
   if (audioPlayer.paused) {
-    const randomIndex = getRandomSongIndex();
-    loadSong(randomIndex);
-    socket.emit("playMusic", randomIndex); // Emitir evento de reproducción al servidor
+    if (primeraVez) {
+      const randomIndex = Math.floor(Math.random() * canciones.length);
+      loadSong(randomIndex);
+      socket.emit("playMusic", randomIndex); // Emitir evento de reproducción al servidor
+      primeraVez = false;
+    } else {
+      playSong();
+      socket.emit("playMusic", actualSong); // Emitir evento de reproducción al servidor
+    }
   } else {
     pauseSong();
     socket.emit("pauseMusic"); // Emitir evento de pausa al servidor

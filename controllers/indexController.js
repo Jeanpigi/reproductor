@@ -22,7 +22,8 @@ exports.signup = async (req, res) => {
     // Verifica si el usuario ya existe
     const usernameExists = await checkIfUsernameExists(username);
     if (usernameExists) {
-      return res.send("El nombre de usuario ya está en uso");
+      console.log("El nombre de usuario ya está en uso");
+      return res.redirect("/signup");
     }
 
     // Crea un nuevo usuario
@@ -33,7 +34,8 @@ exports.signup = async (req, res) => {
 
     res.redirect("/login");
   } catch (error) {
-    res.send(`Error que se está presentando es ${error}`);
+    console.log(`Error que se está presentando es ${error}`);
+    return res.redirect("/signup");
   }
 };
 
@@ -44,7 +46,8 @@ exports.login = async (req, res) => {
     // Obtener el usuario por nombre de usuario
     const user = await getUserByUsername(username);
     if (!user) {
-      return res.send("El nombre de usuario o la contraseña son incorrectos");
+      console.log("El nombre de usuario es incorrecto");
+      return res.redirect("/login");
     }
 
     // Comparar las contraseñas
@@ -53,7 +56,8 @@ exports.login = async (req, res) => {
       user[0].password
     );
     if (!isPasswordCorrect) {
-      return res.send("El nombre de usuario o la contraseña son incorrectos");
+      console.log("La contraseña es incorrecto");
+      return res.redirect("/login");
     }
 
     // Guardar el usuario en la sesión
@@ -61,7 +65,8 @@ exports.login = async (req, res) => {
 
     res.redirect("/canciones");
   } catch (error) {
-    res.send(`Error que se está presentando es ${error}`);
+    console.log(`Error que se está presentando es ${error}`);
+    return res.redirect("/login");
   }
 };
 
@@ -70,7 +75,8 @@ exports.canciones = async (req, res) => {
     const canciones = await getAllSongs();
     res.json(canciones);
   } catch (error) {
-    res.send(`Error del parte del servidor ${error}`);
+    console.log(`Error del parte del servidor ${error}`);
+    res.json(error);
   }
 };
 
@@ -115,8 +121,10 @@ exports.insertSong = async (req, res) => {
 
     res.redirect("/canciones");
   } catch (error) {
-    console.error(error);
-    res.send("Ocurrió un error al momento de insertar en la base de datos");
+    console.error(
+      `Ocurrió un error al momento de insertar en la base de datos ${error}`
+    );
+    res.redirect("/canciones");
   }
 };
 
@@ -139,8 +147,10 @@ exports.deleteSong = async (req, res) => {
       console.log("La cancion no existe");
     }
   } catch (error) {
-    console.error(error);
-    res.send("Ha ocurrido un error del lado del servidor");
+    console.error(
+      `Ocurrió un error al momento de insertar en la base de datos ${error}`
+    );
+    res.redirect("/canciones");
   }
 };
 
@@ -195,8 +205,10 @@ exports.insertAudios = async (req, res) => {
 
     res.redirect("/canciones");
   } catch (error) {
-    console.error(error);
-    res.send("Ocurrió un error del lado del servidor");
+    console.error(
+      `Ocurrió un error al momento de insertar en la base de datos ${error}`
+    );
+    res.redirect("/canciones");
   }
 };
 
@@ -219,7 +231,9 @@ exports.deleteAudios = async (req, res) => {
       console.log("No existe el anuncio");
     }
   } catch (error) {
-    console.error(error);
-    res.send("Ha ocurrido un error del lado del servidor");
+    console.error(
+      `Ocurrió un error al momento de insertar en la base de datos ${error}`
+    );
+    res.redirect("/canciones");
   }
 };
