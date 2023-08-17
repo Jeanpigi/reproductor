@@ -9,7 +9,7 @@ const PORT = 3006;
 
 const musicFolder = path.join(__dirname, "public", "music");
 const adsFolder = path.join(__dirname, "public", "audios");
-const adInterval = 120000;
+const adInterval = 120000; // Intervalo de 2 minutos en milisegundos
 
 let musicFiles = [];
 let currentSongIndex = 0;
@@ -32,6 +32,17 @@ function loadMusicFiles() {
     shuffleArray(musicFiles);
     console.log("Archivos de música cargados:", musicFiles);
   });
+
+  fs.readdir(adsFolder, (err, files) => {
+    if (err) {
+      console.error("Error al leer la carpeta de anuncios:", err);
+      return;
+    }
+
+    adsFiles = files.map((file) => path.join(adsFolder, file));
+    shuffleArray(adsFiles);
+    console.log("Archivos de anuncios cargados:", adsFiles);
+  });
 }
 
 // Función para barajar un array en su lugar
@@ -42,21 +53,36 @@ function shuffleArray(array) {
   }
 }
 
-app.get("/stream", (req, res) => {
-  if (musicFiles.length === 0) {
-    res.status(500).send("No hay archivos de música disponibles.");
-    return;
-  }
+function playAd(res) {
+  const currentAdFilePath = adsFiles[currentAdsIndex];
+  const adAudioStream = fs.createReadStream(currentAdFilePath);
 
+  adAudioStream.on("end", () => {
+    setTimeout(playMusic, adInterval); // Llamada a la música después del intervalo
+  });
+
+  adAudioStream.pipe(res, { end: false });
+}
+
+function playMusic(res) {
   const currentFilePath = musicFiles[currentSongIndex];
   const audioStream = fs.createReadStream(currentFilePath);
 
-  res.setHeader("Content-Type", "audio/mpeg");
-  audioStream.pipe(res);
-
   audioStream.on("end", () => {
     currentSongIndex = (currentSongIndex + 1) % musicFiles.length;
+    playAd(res); // Reproducir anuncio después de cada canción
   });
+
+  audioStream.pipe(res);
+}
+
+app.get("/stream", (req, res) => {
+  if (musicFiles.length === 0 || adsFiles.length === 0) {
+    res.status(500).send("No hay archivos de música o anuncios disponibles.");
+    return;
+  }
+
+  playMusic(res); // Comienza a reproducir música y anuncios
 });
 
 loadMusicFiles();
