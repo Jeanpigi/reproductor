@@ -9,7 +9,7 @@ const PORT = 3006;
 
 const musicFolder = path.join(__dirname, "public", "music");
 const adsFolder = path.join(__dirname, "public", "audios");
-const adInterval = 120000; // Intervalo de 2 minutos en milisegundos
+const adInterval = 120000;
 
 let musicFiles = [];
 let currentSongIndex = 0;
@@ -35,13 +35,14 @@ function loadMusicFiles() {
 
   fs.readdir(adsFolder, (err, files) => {
     if (err) {
-      console.error("Error al leer la carpeta de anuncios:", err);
+      console.error("Error al leer la carpeta de música:", err);
       return;
     }
 
     adsFiles = files.map((file) => path.join(adsFolder, file));
+    // Baraja la lista de archivos de música de forma aleatoria
     shuffleArray(adsFiles);
-    console.log("Archivos de anuncios cargados:", adsFiles);
+    console.log("Archivos de música cargados:", adsFiles);
   });
 }
 
@@ -53,36 +54,22 @@ function shuffleArray(array) {
   }
 }
 
-function playAd(res) {
-  const currentAdFilePath = adsFiles[currentAdsIndex];
-  const adAudioStream = fs.createReadStream(currentAdFilePath);
-
-  adAudioStream.on("end", () => {
-    setTimeout(playMusic, adInterval); // Llamada a la música después del intervalo
-  });
-
-  adAudioStream.pipe(res, { end: false });
-}
-
-function playMusic(res) {
-  const currentFilePath = musicFiles[currentSongIndex];
-  const audioStream = fs.createReadStream(currentFilePath);
-
-  audioStream.on("end", () => {
-    currentSongIndex = (currentSongIndex + 1) % musicFiles.length;
-    playAd(res); // Reproducir anuncio después de cada canción
-  });
-
-  audioStream.pipe(res);
-}
-
 app.get("/stream", (req, res) => {
-  if (musicFiles.length === 0 || adsFiles.length === 0) {
-    res.status(500).send("No hay archivos de música o anuncios disponibles.");
+  if (musicFiles.length === 0) {
+    res.status(500).send("No hay archivos de música disponibles.");
     return;
   }
 
-  playMusic(res); // Comienza a reproducir música y anuncios
+  const currentFilePath = musicFiles[currentSongIndex];
+  const audioStream = fs.createReadStream(currentFilePath);
+
+  res.setHeader("Content-Type", "audio/mpeg");
+  res.set("transfer-encoding", "chunked");
+  audioStream.pipe(res);
+
+  audioStream.on("end", () => {
+    currentSongIndex = (currentSongIndex + 1) % musicFiles.length;
+  });
 });
 
 loadMusicFiles();

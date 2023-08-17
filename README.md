@@ -97,4 +97,4 @@ Si deseas contribuir a este proyecto y ayudarlo a crecer, sigue estos pasos:
 
 ## Licencia
 
-Esta aplicación está bajo la Licencia MIT. Para obtener más detalles, consulta el archivo [LICENSE](enlace_a_la_licencia).
+Esta obra está bajo una [Licencia Creative Commons Atribución-NoComercial-SinDerivadas 4.0 Internacional](http://creativecommons.org/licenses/by-nc-nd/4.0/deed.es_ES).
