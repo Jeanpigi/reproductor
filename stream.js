@@ -10,41 +10,38 @@ const PORT = 3006;
 
 const musicFolder = path.join(__dirname, "public", "music");
 const adsFolder = path.join(__dirname, "public", "audios");
-const adInterval = 120000;
+const adInterval = 120000; // Intervalo de 2 minutos en milisegundos
 
 let musicFiles = [];
-let currentSongIndex = 0;
-
 let adsFiles = [];
-let currentAdsIndex = 0;
+let currentFileIndex = 0; // Índice para alternar entre canciones y anuncios
 
 app.use(express.static("public"));
 app.use(compression());
 
-function loadMusicFiles() {
-  fs.readdir(musicFolder, (err, files) => {
-    if (err) {
-      console.error("Error al leer la carpeta de música:", err);
-      return;
-    }
-
-    musicFiles = files.map((file) => path.join(musicFolder, file));
-    shuffleArray(musicFiles);
-    // console.log("Listado de musica:", musicFiles);
-  });
-
-  fs.readdir(adsFolder, (err, files) => {
-    if (err) {
-      console.error("Error al leer la carpeta de música:", err);
-      return;
-    }
-
-    adsFiles = files.map((file) => path.join(adsFolder, file));
-    shuffleArray(adsFiles);
+function loadFiles(folderPath) {
+  return new Promise((resolve, reject) => {
+    fs.readdir(folderPath, (err, files) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+      resolve(files.map((file) => path.join(folderPath, file)));
+    });
   });
 }
 
-// Función para barajar un array en su lugar
+async function initialize() {
+  try {
+    musicFiles = await loadFiles(musicFolder);
+    adsFiles = await loadFiles(adsFolder);
+    shuffleArray(musicFiles);
+    shuffleArray(adsFiles);
+  } catch (error) {
+    console.error("Error al cargar los archivos:", error);
+  }
+}
+
 function shuffleArray(array) {
   for (let i = array.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -53,12 +50,12 @@ function shuffleArray(array) {
 }
 
 app.get("/stream", (req, res) => {
-  if (musicFiles.length === 0) {
-    res.status(500).send("No hay archivos de música disponibles.");
+  const currentFilePath = getNextItemPath();
+
+  if (!currentFilePath) {
+    res.status(500).send("No hay archivos disponibles para reproducir.");
     return;
   }
-
-  const currentFilePath = musicFiles[currentSongIndex];
 
   ffmpeg.ffprobe(currentFilePath, (err, metadata) => {
     if (err) {
@@ -75,18 +72,14 @@ app.get("/stream", (req, res) => {
 
     const fileName = path.basename(currentFilePath); // Extrae el nombre del archivo de la ruta completa
 
-    console.log(
-      "----------------------------------------------------------------------"
-    );
+    console.log("----------------------------------------------");
     console.log(`Archivo: ${fileName}`);
     console.log(`Duración: ${minutes}:${seconds}`);
     console.log(`Duración en segundos: ${durationInSeconds}`);
     console.log(`Frecuencia de muestreo: ${sampleRate} Hz`);
     console.log(`Códec de audio: ${audioCodec}`);
     console.log(`Tasa de bits: ${bitRate} bps`);
-    console.log(
-      "----------------------------------------------------------------------"
-    );
+    console.log("----------------------------------------------");
 
     const audioStream = fs.createReadStream(currentFilePath);
 
@@ -95,13 +88,32 @@ app.get("/stream", (req, res) => {
     audioStream.pipe(res);
 
     audioStream.on("end", () => {
-      currentSongIndex = (currentSongIndex + 1) % musicFiles.length;
+      setTimeout(() => {
+        res.end(); // Finaliza la transmisión
+      }, adInterval);
     });
   });
 });
 
-loadMusicFiles();
+function getNextItemPath() {
+  const currentFilePath =
+    currentFileIndex % 2 === 0 ? musicFiles.shift() : adsFiles.shift();
+
+  if (currentFileIndex % 2 === 0) {
+    if (musicFiles.length === 0) {
+      shuffleArray(musicFiles);
+    }
+  } else {
+    if (adsFiles.length === 0) {
+      shuffleArray(adsFiles);
+    }
+  }
+
+  currentFileIndex++;
+  return currentFilePath;
+}
 
 http.listen(PORT, () => {
   console.log(`Servidor de streaming iniciado en el puerto ${PORT}`);
+  initialize();
 });
