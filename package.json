@@ -5,8 +5,10 @@
   "main": "index.js",
   "scripts": {
     "dev": "node --watch index.js",
-    "start": "node index.js",
-    "stream": "node --watch stream.js"
+    "stream": "node --watch stream.js",
+    "start": "concurrently \"node index.js\" \"node stream.js\"",
+    "start-index": "node index.js",
+    "start-stream": "node stream.js"
   },
   "keywords": [],
   "author": "",
@@ -26,5 +28,8 @@
     "multer": "^1.4.5-lts.1",
     "mysql2": "^3.3.3",
     "socket.io": "^4.6.2"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.0"
   }
 }
