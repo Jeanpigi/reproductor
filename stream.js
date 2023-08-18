@@ -10,7 +10,7 @@ const PORT = 3006;
 
 const musicFolder = path.join(__dirname, "public", "music");
 const adsFolder = path.join(__dirname, "public", "audios");
-// const adInterval = 1200000; // Intervalo de 2 minutos en milisegundos
+const adInterval = 1200000; // Intervalo de 2 minutos en milisegundos
 
 let musicFiles = [];
 let adsFiles = [];
@@ -89,10 +89,8 @@ app.get("/stream", (req, res) => {
 
     audioStream.on("end", () => {
       setTimeout(() => {
-        const nextFilePath = getNextItemPath();
-        const nextAudioStream = fs.createReadStream(nextFilePath);
-        nextAudioStream.pipe(res);
-      }, 0);
+        res.end(); // Finaliza la transmisión
+      }, adInterval);
     });
   });
 });
