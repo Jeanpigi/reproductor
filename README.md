@@ -1,14 +1,15 @@
 # Supermercado Primo - Reproductor de Música Web
 
-El Supermercado Primo presenta un reproductor de música web desarrollado utilizando las tecnologías Node.js, Express y Mysql. Esta aplicación avanzada permite a los usuarios disfrutar de su música favorita mientras brinda una experiencia fluida y confiable.
+El Supermercado Primo presenta un reproductor de música web y radio online el cuál esta desarrollado con las tecnologías Node.js, Express y Mysql. Esta aplicación avanzada permite a los usuarios disfrutar de su música favorita mientras brinda una experiencia fluida y confiable. Ambos servicios consumen la misma musica y anuncios.
 
 ## Características principales
 
 - Registro de usuarios: Los usuarios pueden crear fácilmente una cuenta personal para acceder a todas las funcionalidades del reproductor de música.
 - Inicio de sesión seguro: Con un sistema de autenticación robusto, los usuarios pueden iniciar sesión de manera segura en sus cuentas.
-- Carga de canciones: La aplicación permite a los usuarios cargar y almacenar sus canciones en formato MP3 y M4A para acceder a ellas en cualquier momento y desde cualquier dispositivo.
+- Carga de canciones y anuncios: La aplicación permite a los usuarios autorizados cargar y almacenar sus canciones o anuncios en formato MP3 y M4A para acceder a ellas en cualquier momento y desde cualquier dispositivo. Nota: los anuncios se deben almacenar en formato MP3.
 - Reproducción de canciones: Los usuarios pueden reproducir sus canciones cargadas sin problemas, brindando una experiencia auditiva excepcional.
 - API para información de canciones: Además de las funcionalidades principales, la aplicación también proporciona una API intuitiva que permite a los desarrolladores obtener información detallada sobre las canciones almacenadas.
+- Permite consumir el servicio de radio online, escuchando musica y anuncios.
 
 ## Requisitos previos
 
@@ -22,22 +23,19 @@ Antes de ejecutar la aplicación, asegúrate de tener instalado lo siguiente:
 1. Clona este repositorio:
 
    ```bash
-   git clone https://github.com/tuusuario/reproductor-musica.git
-
+      git clone git@github.com:Jeanpigi/reproductor.git
    ```
 
 2. Ve al directorio del proyecto:
 
    ```bash
-   cd reproductor-musica
-
+      cd reproductor
    ```
 
 3. Instala las dependencias:
 
    ```bash
-   npm install
-
+      npm install
    ```
 
 4. Configura las variables de entorno:
@@ -56,7 +54,7 @@ los servicios se dividen en dos, en el reproductor y la radio online, dependiend
       npm run start
    ```
 
-6. Accede a la aplicación en tu navegador web en la siguiente URL: http://localhost:3000
+6. Accede a la aplicación en tu navegador web en la siguiente URL: http://localhost:3005
 
 7. Iniciar el servidor de radio:
 
@@ -79,7 +77,7 @@ los servicios se dividen en dos, en el reproductor y la radio online, dependiend
 La aplicación proporciona las siguientes rutas de la API:
 
 - `GET /api/canciones`: Obtiene todas las canciones.
-- `GET /api/canciones/:id`: Obtiene una canción específica por su ID.
+- `GET /api/anuncios`: Obtiene todos los anuncios.
 
 ## Contribución
 
