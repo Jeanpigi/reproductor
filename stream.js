@@ -113,7 +113,8 @@ function getNextItemPath() {
   return currentFilePath;
 }
 
+initialize();
+
 http.listen(PORT, () => {
   console.log(`Servidor de streaming iniciado en el puerto ${PORT}`);
-  initialize();
 });
