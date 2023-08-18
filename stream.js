@@ -1,5 +1,5 @@
 const express = require("express");
-const compression = require("express-compression");
+const compression = require("compression");
 const app = express();
 const http = require("http").createServer(app);
 const fs = require("fs");
@@ -29,7 +29,6 @@ function loadMusicFiles() {
     }
 
     musicFiles = files.map((file) => path.join(musicFolder, file));
-    // Baraja la lista de archivos de música de forma aleatoria
     shuffleArray(musicFiles);
     // console.log("Listado de musica:", musicFiles);
   });
@@ -41,7 +40,6 @@ function loadMusicFiles() {
     }
 
     adsFiles = files.map((file) => path.join(adsFolder, file));
-    // Baraja la lista de archivos de música de forma aleatoria
     shuffleArray(adsFiles);
   });
 }
@@ -69,9 +67,26 @@ app.get("/stream", (req, res) => {
     }
 
     const bitRate = metadata.streams[0].bit_rate;
+    const durationInSeconds = metadata.format.duration;
+    const sampleRate = metadata.streams[0].sample_rate; // Obtén la frecuencia de muestreo
+    const audioCodec = metadata.streams[0].codec_name; // Obtén el códec de audio
+    const minutes = Math.floor(durationInSeconds / 60);
+    const seconds = Math.floor(durationInSeconds % 60);
+
     const fileName = path.basename(currentFilePath); // Extrae el nombre del archivo de la ruta completa
 
-    console.log(`Tasa de bits: ${bitRate} bps del archivo: ${fileName}`); // Imprime la tasa de bits en la consola
+    console.log(
+      "----------------------------------------------------------------------"
+    );
+    console.log(`Archivo: ${fileName}`);
+    console.log(`Duración: ${minutes}:${seconds}`);
+    console.log(`Duración en segundos: ${durationInSeconds}`);
+    console.log(`Frecuencia de muestreo: ${sampleRate} Hz`);
+    console.log(`Códec de audio: ${audioCodec}`);
+    console.log(`Tasa de bits: ${bitRate} bps`);
+    console.log(
+      "----------------------------------------------------------------------"
+    );
 
     const audioStream = fs.createReadStream(currentFilePath);
 
