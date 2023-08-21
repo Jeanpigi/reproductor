@@ -1,6 +1,5 @@
 const socketIO = require("socket.io");
-const fs = require("fs");
-const path = require("path");
+const fs = require("fs").promises;
 
 module.exports = function (server) {
   const io = socketIO(server);
@@ -20,33 +19,8 @@ module.exports = function (server) {
 
     console.log(`Número de clientes conectados: ${numClients}`);
 
-    sendSongsToClient(socket);
-    sendAdsToClient(socket);
-
-    // Escuchar eventos de mensajes recibidos desde el cliente
-    socket.on("sync", (currentTime) => {
-      // Transmitir el mensaje a todos los demás clientes
-      clients.forEach((client) => {
-        if (client !== socket) {
-          client.emit("sync", currentTime);
-        }
-      });
-    });
-
-    // Emitir el evento 'playMusic' cuando se reproduzca una canción en el servidor
-    socket.on("playMusic", (songIndex) => {
-      socket.broadcast.emit("playMusic", songIndex);
-    });
-
-    // Emitir el evento 'pauseMusic' cuando se pause la canción en el servidor
-    socket.on("pauseMusic", () => {
-      socket.broadcast.emit("pauseMusic");
-    });
-
-    // Emitir el evento 'playAd' cuando se reproduzca un anuncio en el servidor
-    socket.on("playAd", (adIndex) => {
-      socket.broadcast.emit("playAd", adIndex);
-    });
+    // Iniciar el ciclo de reproducción
+    startPlayback(socket);
 
     // Manejar eventos de desconexión de los clientes
     socket.on("disconnect", () => {
@@ -57,46 +31,40 @@ module.exports = function (server) {
   });
 };
 
-const sendSongsToClient = (socket) => {
+// Obtiene las canciones desde la carpeta music en public
+const getSongs = async () => {
   const carpetaMusica = "public/music";
-  fs.readdir(carpetaMusica, (err, archivos) => {
-    if (err) {
-      console.log("Error al leer la carpeta de musica:", err);
-      return;
-    }
-
-    const canciones = archivos.filter((archivo) => {
-      const extension = archivo.split(".").pop();
-      return extension === "mp3" || extension === "m4a";
-    });
-
-    canciones.forEach((cancion) => {
-      const nombreCancion = path.parse(cancion).name;
-      const extension = path.parse(cancion).ext;
-
-      socket.emit("canciones", { nombreCancion, extension });
-    });
-  });
+  try {
+    const archivos = await fs.readdir(carpetaMusica); // Lee los archivos de forma asincrónica
+    return archivos; // Devuelve el arreglo de nombres de archivos
+  } catch (err) {
+    console.log("Error al leer la carpeta de música:", err);
+    return [];
+  }
 };
 
-const sendAdsToClient = (socket) => {
-  const carpetaAnuncios = "public/audios";
-  fs.readdir(carpetaAnuncios, (err, archivos) => {
-    if (err) {
-      console.log("Error al leer la carpeta de musica:", err);
-      return;
-    }
-
-    const anuncios = archivos.filter((archivo) => {
-      const extension = archivo.split(".").pop();
-      return extension === "mp3";
-    });
-
-    anuncios.forEach((cancion) => {
-      const nombreAnuncio = path.parse(cancion).name;
-      const extension = path.parse(cancion).ext;
-
-      socket.emit("anuncios", { nombreAnuncio, extension });
-    });
-  });
+// selecciona una canción aleatoriamente del array que se pase
+const obtenerCancionAleatoria = (array) => {
+  const randomIndex = Math.floor(Math.random() * array.length);
+  return array[randomIndex]; // Devuelve un elemento aleatorio del arreglo
 };
+
+// Función para iniciar el ciclo de reproducción
+const startPlayback = async (socket) => {
+  try {
+    const songs = await getSongs();
+    if (songs.length > 0) {
+      // Reproduce canciones en bucle
+      while (true) {
+        const randomSong = obtenerCancionAleatoria(songs);
+        socket.broadcast.emit("play", randomSong);
+        await delay(5000); // Espera 5 segundos antes de reproducir la siguiente canción
+      }
+    }
+  } catch (error) {
+    console.error("Error al obtener o reproducir canciones:", error);
+  }
+};
+
+// Función de espera asincrónica
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));

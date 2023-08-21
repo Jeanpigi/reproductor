@@ -1,75 +1,27 @@
+// En el cliente
 const playButton = document.getElementById("play-button");
 const play = document.getElementById("play-btn");
-const playerImage = document.getElementById("player-image");
 const audioPlayer = document.getElementById("audio-player");
-const audioAds = document.getElementById("audio-ads");
+const playerImage = document.getElementById("player-image");
 const titulo = document.getElementById("titulo");
 const range = document.getElementById("duration__range");
-const forwardButton = document.getElementById("forward");
-const backwardButton = document.getElementById("backward");
 
-// Establecer conexión con el servidor
-let socket = io();
+const socket = io();
 
-let canciones = [];
-let anuncios = [];
-
-let actualSong = null;
 let isRotating = false;
 
 let animationId; // Declaración de la variable animationId
 
-// esta variable permite reproducir la canción aleaotoriamente la primera vez
-let primeraVez = true;
-
-const adDuration = 120; // Duración del anuncio en segundos (2 minutos)
-// const adDuration = 7200; // Duración del anuncio en segundos (2 horas)
-
-let hasPlayedAd = false; // Variable para controlar si el anuncio ya ha sido reproducido
-
-let isDragging = false; // Variable para controlar si el rango está siendo arrastrado
-
-range.disabled = true;
-
-let adIndex = 0;
-
-socket.on("canciones", ({ nombreCancion, extension }) => {
-  canciones.push(nombreCancion + extension);
+playButton.addEventListener("click", () => {
+  socket.emit("play", "enviando el play"); // Envía una solicitud al servidor para reproducir
 });
 
-socket.on("anuncios", ({ nombreAnuncio, extension }) => {
-  anuncios.push(nombreAnuncio + extension);
+socket.on("play", (cancion) => {
+  console.log(cancion);
+  audioPlayer.src = "/music/" + cancion;
+  playSong(cancion);
+  changeSongtitle(cancion);
 });
-
-// Escuchar eventos del socket
-socket.on("playMusic", (songIndex) => {
-  // Reproducir música
-  loadSong(songIndex);
-  playSong();
-});
-
-socket.on("playAd", (adIndex) => {
-  loadSong(actualSong);
-  playAd(adIndex);
-});
-
-socket.on("pauseMusic", () => {
-  // Pausar música
-  pauseSong();
-});
-
-function getRandomSongIndex() {
-  return Math.floor(Math.random() * canciones.length);
-}
-
-const loadSong = (songIndex) => {
-  if (songIndex !== actualSong) {
-    actualSong = songIndex;
-    audioPlayer.src = "/music/" + canciones[songIndex];
-    playSong();
-    changeSongtitle(songIndex);
-  }
-};
 
 const rotateImage = () => {
   playerImage.style.transform += "rotate(1deg)";
@@ -92,10 +44,9 @@ const updateControls = () => {
   }
 };
 
-socket.on("sync", (currentTime) => {
-  // Recibir mensaje de sincronización y establecer el tiempo de reproducción del audio
-  audioPlayer.currentTime = parseFloat(currentTime);
-});
+const changeSongtitle = (cancion) => {
+  titulo.innerText = cancion;
+};
 
 const updateProgress = () => {
   const { duration, currentTime } = audioPlayer;
@@ -121,8 +72,8 @@ const setProgress = (event) => {
   audioPlayer.currentTime = current;
 };
 
-const playSong = () => {
-  if (actualSong !== null) {
+const playSong = (cancion) => {
+  if (cancion !== null) {
     if (audioPlayer.currentTime > 0) {
       audioPlayer.play();
     } else {
@@ -143,85 +94,18 @@ const pauseSong = () => {
   isRotating = false;
 };
 
-let adIndices = shuffleArray([...Array(anuncios.length).keys()]); // Mezclar los índices de los anuncios
-
-// Función para mezclar un arreglo de manera aleatoria
-function shuffleArray(array) {
-  const shuffled = array.slice();
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
-  return shuffled;
-}
-
-// En la función playAd
-const playAd = () => {
-  if (adIndices.length === 0) {
-    // Todos los anuncios han sido reproducidos, mezcla nuevamente
-    adIndices = shuffleArray([...Array(anuncios.length).keys()]);
-  }
-
-  const nextAdIndex = adIndices.shift(); // Obtén y elimina el próximo índice de anuncio
-
-  audioAds.src = "/audios/" + anuncios[nextAdIndex];
-
-  audioAds.onloadedmetadata = () => {
-    pauseSong();
-    audioAds.play();
-
-    setTimeout(() => {
-      nextSong();
-      hasPlayedAd = false;
-      changeSongtitle(actualSong, null); // Cambiar el título de la canción
-    }, audioAds.duration * 1000);
-
-    changeSongtitle(actualSong, nextAdIndex); // Cambiar el título del anuncio
-  };
+const formatTime = (time) => {
+  const minutes = Math.floor(time / 60);
+  const seconds = Math.floor(time % 60);
+  return padTime(minutes) + ":" + padTime(seconds);
 };
 
-const changeSongtitle = (songIndex, adIndex) => {
-  if (typeof adIndex !== "undefined" && adIndex !== null) {
-    titulo.innerText = anuncios[adIndex];
-  } else {
-    titulo.innerText = canciones[songIndex];
+const padTime = (time) => {
+  if (typeof time !== "number") {
+    return time; // Si el tiempo no es un número, devuelve el valor sin modificar
   }
+  return time < 10 ? "0" + time : time;
 };
-
-const nextSong = () => {
-  const randomIndex = getRandomSongIndex();
-  loadSong(randomIndex);
-};
-
-// Agrega el event listener para el botón de reproducción
-playButton.addEventListener("click", () => {
-  if (audioPlayer.paused) {
-    if (primeraVez) {
-      const randomIndex = Math.floor(Math.random() * canciones.length);
-      loadSong(randomIndex);
-      socket.emit("playMusic", randomIndex); // Emitir evento de reproducción al servidor
-      primeraVez = false;
-    } else {
-      playSong();
-      socket.emit("playMusic", actualSong); // Emitir evento de reproducción al servidor
-    }
-  } else {
-    pauseSong();
-    socket.emit("pauseMusic"); // Emitir evento de pausa al servidor
-  }
-});
-
-audioPlayer.addEventListener("timeupdate", updateProgress);
-
-audioPlayer.addEventListener("ended", function () {
-  // Verificar si han pasado dos minutos y no se ha mostrado el anuncio aún
-  if (audioPlayer.currentTime >= adDuration && !hasPlayedAd) {
-    playAd(adIndex);
-    hasPlayedAd = true; // Marcar el anuncio como reproducido para evitar que se repita
-  } else {
-    nextSong(); // Ir a la siguiente canción al finalizar la actual
-  }
-});
 
 // Agrega el event listener 'input' para actualizar el progreso y el color de la pista
 range.addEventListener("input", updateProgress);
@@ -242,35 +126,3 @@ range.addEventListener("click", (event) => {
     setProgress(event);
   }
 });
-
-// Agregar evento al botón de adelantar
-forwardButton.addEventListener("click", () => {
-  nextSong();
-  socket.emit("playMusic", actualSong); // Emitir evento de reproducción al servidor
-});
-
-// Agregar evento al botón de retroceder
-backwardButton.addEventListener("click", () => {
-  if (audioPlayer.currentTime <= 5) {
-    // Retrocede si el tiempo actual es menor o igual a 5 segundos
-    if (actualSong > 0) {
-      loadSong(actualSong - 1);
-      socket.emit("playMusic", actualSong); // Emitir evento de reproducción al servidor
-    }
-  } else {
-    audioPlayer.currentTime = 0; // Reinicia la canción si el tiempo actual es mayor a 5 segundos
-  }
-});
-
-const formatTime = (time) => {
-  const minutes = Math.floor(time / 60);
-  const seconds = Math.floor(time % 60);
-  return padTime(minutes) + ":" + padTime(seconds);
-};
-
-const padTime = (time) => {
-  if (typeof time !== "number") {
-    return time; // Si el tiempo no es un número, devuelve el valor sin modificar
-  }
-  return time < 10 ? "0" + time : time;
-};
