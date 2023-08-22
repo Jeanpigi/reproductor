@@ -2,9 +2,9 @@ const express = require("express");
 const compression = require("compression");
 const app = express();
 const http = require("http").createServer(app);
-const path = require("path");
 const fs = require("fs");
-const { Howl } = require("howler");
+const path = require("path");
+const ffmpeg = require("fluent-ffmpeg");
 
 const io = require("socket.io-client");
 
@@ -14,46 +14,57 @@ const socket = io(SERVER_URL);
 
 const PORT = 3006;
 
+const musicFolder = path.join(__dirname, "public", "music");
+
+let currentSong = null;
+
 app.use(express.static("public"));
 app.use(compression());
 
-let musicSound; // Declaración de la instancia de Howl para la música
-
 app.get("/stream", (req, res) => {
-  // Si no tienes una lógica aquí para obtener el archivo actual (currentFilePath), asegúrate de tenerla
+  if (!currentSong) {
+    res.status(500).send("No hay canción para reproducir.");
+    return;
+  }
 
-  // Escucha el evento "play" desde el servidor de sockets
-  socket.on("play", (cancion) => {
-    console.log(cancion);
-    let songPath = path.join(__dirname, "public", "music", cancion);
+  const currentFilePath = path.join(musicFolder, currentSong);
 
-    console.log(songPath);
-
-    // Detener la reproducción del audio anterior si existe
-    if (musicSound) {
-      musicSound.unload();
+  ffmpeg.ffprobe(currentFilePath, (err, metadata) => {
+    if (err) {
+      console.error("Error al obtener la información del archivo:", err);
+      return;
     }
 
-    // Crear una nueva instancia de Howl para reproducir la canción
-    musicSound = new Howl({
-      src: songPath,
-      html5: true,
-      onend: () => {
-        console.log("Canción terminada");
-      },
-    });
+    const bitRate = metadata.streams[0].bit_rate;
+    const durationInSeconds = metadata.format.duration;
+    const sampleRate = metadata.streams[0].sample_rate; // Obtén la frecuencia de muestreo
+    const audioCodec = metadata.streams[0].codec_name; // Obtén el códec de audio
+    const minutes = Math.floor(durationInSeconds / 60);
+    const seconds = Math.floor(durationInSeconds % 60);
 
-    // Empezar a transmitir el audio al cliente
-    musicSound.play();
+    const fileName = path.basename(currentFilePath); // Extrae el nombre del archivo de la ruta completa
 
-    // Cuando la solicitud se cierre, detener la reproducción
-    req.on("close", () => {
-      musicSound.stop();
-    });
+    console.log("----------------------------------------------");
+    console.log(`Archivo: ${fileName}`);
+    console.log(`Duración: ${minutes}:${seconds}`);
+    console.log(`Duración en segundos: ${durationInSeconds}`);
+    console.log(`Frecuencia de muestreo: ${sampleRate} Hz`);
+    console.log(`Códec de audio: ${audioCodec}`);
+    console.log(`Tasa de bits: ${bitRate} bps`);
+    console.log("----------------------------------------------");
+
+    const audioStream = fs.createReadStream(currentFilePath);
+
+    res.setHeader("Content-Type", "audio/mpeg");
+    res.set("transfer-encoding", "chunked");
+    audioStream.pipe(res);
   });
+});
 
-  // Puedes responder con algún mensaje al cliente que hizo la solicitud
-  res.send("Reproducción iniciada.");
+socket.on("play", (cancion) => {
+  const nombreArchivo = cancion.split("/").pop(); // Obtiene el último segmento de la ruta
+  currentSong = nombreArchivo;
+  // Iniciar la reproducción de la canción aquí si lo deseas
 });
 
 http.listen(PORT, () => {

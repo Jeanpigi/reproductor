@@ -5,22 +5,63 @@ const audioPlayer = document.getElementById("audio-player");
 const playerImage = document.getElementById("player-image");
 const titulo = document.getElementById("titulo");
 const range = document.getElementById("duration__range");
+const forwardButton = document.getElementById("forward");
+const backwardButton = document.getElementById("backward");
 
 const socket = io();
 
 let isRotating = false;
 
-let animationId; // Declaración de la variable animationId
+let pausedTime = 0;
+
+// Declaración de la variable animationId
+let animationId;
+
+// Variable para controlar si el rango está siendo arrastrado
+let isDragging = false;
+
+let isPlaying = false; // Variable para rastrear el estado de reproducción
+
+range.disabled = true;
+
+const adDuration = 120; // Duración del anuncio en segundos (2 minutos)
 
 playButton.addEventListener("click", () => {
-  socket.emit("play", "enviando el play"); // Envía una solicitud al servidor para reproducir
+  if (audioPlayer.paused) {
+    if (isPlaying) {
+      playSong();
+    } else {
+      socket.emit("play"); // Emit play event to the server
+      isPlaying = true;
+    }
+  } else {
+    pauseSong(); // Pause the audio locally
+    socket.emit("pause", "enviando el pause"); // Emit pause event to the server
+  }
 });
 
 socket.on("play", (cancion) => {
   console.log(cancion);
-  audioPlayer.src = "/music/" + cancion;
+  audioPlayer.src = cancion;
   playSong(cancion);
   changeSongtitle(cancion);
+
+  audioPlayer.addEventListener("ended", () => {
+    if (audioPlayer.currentTime >= audioPlayer.duration - adDuration) {
+      socket.emit("ads"); // Emitir evento para solicitar anuncio publicitario
+    } else {
+      nextSong();
+    }
+  });
+});
+
+socket.on("playAd", (ad) => {
+  console.log("Reproduciendo anuncio:", ad);
+  audioPlayer.src = ad;
+  playSong(ad);
+  audioPlayer.addEventListener("ended", () => {
+    nextSong();
+  });
 });
 
 const rotateImage = () => {
@@ -45,7 +86,8 @@ const updateControls = () => {
 };
 
 const changeSongtitle = (cancion) => {
-  titulo.innerText = cancion;
+  const nombreArchivo = cancion.split("/").pop(); // Obtiene el último segmento de la ruta
+  titulo.innerText = nombreArchivo;
 };
 
 const updateProgress = () => {
@@ -74,11 +116,11 @@ const setProgress = (event) => {
 
 const playSong = (cancion) => {
   if (cancion !== null) {
-    if (audioPlayer.currentTime > 0) {
-      audioPlayer.play();
-    } else {
-      audioPlayer.play();
+    if (pausedTime > 0) {
+      audioPlayer.currentTime = pausedTime; // Establece la posición de tiempo guardada
+      pausedTime = 0; // Resetea la posición de tiempo guardada
     }
+    audioPlayer.play();
     updateControls();
     if (!isRotating) {
       rotateImage();
@@ -89,9 +131,25 @@ const playSong = (cancion) => {
 
 const pauseSong = () => {
   audioPlayer.pause();
+  pausedTime = audioPlayer.currentTime; // Guarda la posición de tiempo actual
   updateControls();
   stopRotation();
   isRotating = false;
+};
+
+const nextSong = () => {
+  isPlaying = false;
+  socket.emit("play");
+};
+
+const backwardSong = () => {
+  pauseSong(); // Pausa la reproducción
+  let newPosition = audioPlayer.currentTime - 10; // Retrocede 10 segundos (ajusta según lo que necesites)
+  if (newPosition < 0) {
+    newPosition = 0; // Evita posiciones negativas
+  }
+  audioPlayer.currentTime = newPosition; // Ajusta la posición de tiempo
+  playSong(); // Reanuda la reproducción si estaba en reproducción
 };
 
 const formatTime = (time) => {
@@ -106,6 +164,15 @@ const padTime = (time) => {
   }
   return time < 10 ? "0" + time : time;
 };
+
+// Agregar evento al botón de adelantar
+forwardButton.addEventListener("click", () => {
+  nextSong();
+});
+
+backwardButton.addEventListener("click", () => {
+  backwardSong();
+});
 
 // Agrega el event listener 'input' para actualizar el progreso y el color de la pista
 range.addEventListener("input", updateProgress);

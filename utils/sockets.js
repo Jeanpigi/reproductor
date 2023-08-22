@@ -1,7 +1,8 @@
 const socketIO = require("socket.io");
 const fs = require("fs").promises;
+const path = require("path");
 
-module.exports = function (server) {
+module.exports = function (server, baseDir) {
   const io = socketIO(server);
 
   // Almacenar las conexiones de clientes
@@ -19,8 +20,76 @@ module.exports = function (server) {
 
     console.log(`Número de clientes conectados: ${numClients}`);
 
-    // Iniciar el ciclo de reproducción
-    startPlayback(socket);
+    // Obtiene las canciones desde la carpeta music en public
+    const getSongs = async () => {
+      const carpetaMusica = path.join(baseDir, "public", "music");
+      try {
+        const archivos = await fs.readdir(carpetaMusica);
+        const rutasRelativas = archivos.map((archivo) =>
+          path.relative(
+            path.join(baseDir, "public"),
+            path.join(carpetaMusica, archivo)
+          )
+        );
+        return rutasRelativas;
+      } catch (err) {
+        console.log("Error al leer la carpeta de música:", err);
+        return [];
+      }
+    };
+
+    const getAds = async () => {
+      const carpetaAudios = path.join(baseDir, "public", "audios");
+      try {
+        const archivos = await fs.readdir(carpetaAudios);
+        const rutasRelativas = archivos.map((archivo) =>
+          path.relative(
+            path.join(baseDir, "public"),
+            path.join(carpetaAudios, archivo)
+          )
+        );
+        return rutasRelativas;
+      } catch (err) {
+        console.log("Error al leer la carpeta de audios:", err);
+        return [];
+      }
+    };
+
+    // selecciona una canción aleatoriamente del array que se pase
+    const obtenerAudioAleatoria = (array) => {
+      const randomIndex = Math.floor(Math.random() * array.length);
+      return array[randomIndex]; // Devuelve un elemento aleatorio del arreglo
+    };
+
+    socket.on("play", () => {
+      getSongs()
+        .then((songs) => {
+          const randomSong = obtenerAudioAleatoria(songs);
+
+          socket.broadcast.emit("play", randomSong);
+          io.emit("play", randomSong);
+        })
+        .catch((error) => {
+          console.error("Error al obtener las canciones:", error);
+        });
+    });
+
+    socket.on("pause", () => {
+      socket.broadcast.emit("pause");
+    });
+
+    socket.on("ads", () => {
+      getAds()
+        .then((ads) => {
+          const randomAds = obtenerAudioAleatoria(ads);
+
+          socket.broadcast.emit("playAd", randomAds);
+          io.emit("playAd", randomAds);
+        })
+        .catch((error) => {
+          console.error("Error al obtener el anuncio", error);
+        });
+    });
 
     // Manejar eventos de desconexión de los clientes
     socket.on("disconnect", () => {
@@ -30,41 +99,3 @@ module.exports = function (server) {
     });
   });
 };
-
-// Obtiene las canciones desde la carpeta music en public
-const getSongs = async () => {
-  const carpetaMusica = "public/music";
-  try {
-    const archivos = await fs.readdir(carpetaMusica); // Lee los archivos de forma asincrónica
-    return archivos; // Devuelve el arreglo de nombres de archivos
-  } catch (err) {
-    console.log("Error al leer la carpeta de música:", err);
-    return [];
-  }
-};
-
-// selecciona una canción aleatoriamente del array que se pase
-const obtenerCancionAleatoria = (array) => {
-  const randomIndex = Math.floor(Math.random() * array.length);
-  return array[randomIndex]; // Devuelve un elemento aleatorio del arreglo
-};
-
-// Función para iniciar el ciclo de reproducción
-const startPlayback = async (socket) => {
-  try {
-    const songs = await getSongs();
-    if (songs.length > 0) {
-      // Reproduce canciones en bucle
-      while (true) {
-        const randomSong = obtenerCancionAleatoria(songs);
-        socket.broadcast.emit("play", randomSong);
-        await delay(5000); // Espera 5 segundos antes de reproducir la siguiente canción
-      }
-    }
-  } catch (error) {
-    console.error("Error al obtener o reproducir canciones:", error);
-  }
-};
-
-// Función de espera asincrónica
-const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
