@@ -66,7 +66,6 @@ module.exports = function (server, baseDir) {
         .then((songs) => {
           const randomSong = obtenerAudioAleatoria(songs);
 
-          socket.broadcast.emit("play", randomSong);
           io.emit("play", randomSong);
         })
         .catch((error) => {
@@ -75,7 +74,7 @@ module.exports = function (server, baseDir) {
     });
 
     socket.on("pause", () => {
-      socket.broadcast.emit("pause");
+      io.emit("pause");
     });
 
     socket.on("ads", () => {
@@ -83,7 +82,6 @@ module.exports = function (server, baseDir) {
         .then((ads) => {
           const randomAds = obtenerAudioAleatoria(ads);
 
-          socket.broadcast.emit("playAd", randomAds);
           io.emit("playAd", randomAds);
         })
         .catch((error) => {
