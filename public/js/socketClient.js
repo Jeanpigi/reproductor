@@ -8,6 +8,7 @@ const range = document.getElementById("duration__range");
 const forwardButton = document.getElementById("forward");
 const backwardButton = document.getElementById("backward");
 
+// Establecer conexión con el servidor
 let socket = io();
 let canciones = [];
 let anuncios = [];
@@ -15,9 +16,15 @@ let actualSong = null;
 let isRotating = false;
 let animationId;
 let primeraVez = true;
-let adDuration = 120; // Cambiar según la duración real del anuncio
+let adDuration = 120;
+// const adDuration = 7200; // Duración del anuncio en segundos (2 horas)
+let hasPlayedAd = false;
+let isDragging = false;
+range.disabled = true;
 
-const iniciar = () => {
+let adIndex = 0;
+
+const init = () => {
   socket.on("canciones", handleCancion);
   socket.on("anuncios", handleAnuncio);
 
@@ -34,6 +41,7 @@ const iniciar = () => {
       setProgress(event);
     }
   });
+
   forwardButton.addEventListener("click", playNextSongOrAd);
   backwardButton.addEventListener("click", rewindOrPrevious);
   audioPlayer.addEventListener("timeupdate", updateProgress);
@@ -48,118 +56,6 @@ const handleAnuncio = ({ nombreAnuncio, extension }) => {
   anuncios.push(nombreAnuncio + extension);
 };
 
-const togglePlay = () => {
-  if (audioPlayer.paused) {
-    if (primeraVez) {
-      primeraVez = false;
-      loadRandomSong();
-    } else {
-      playSong();
-    }
-  } else {
-    pauseSong();
-  }
-};
-
-const loadRandomSong = () => {
-  const randomIndex = getRandomSongIndex();
-  loadSong(randomIndex);
-  socket.emit("playMusic", randomIndex);
-};
-
-const playSong = () => {
-  if (actualSong !== null) {
-    audioPlayer.play();
-    updateControls();
-    if (!isRotating) {
-      rotateImage();
-      isRotating = true;
-    }
-  }
-};
-
-const pauseSong = () => {
-  audioPlayer.pause();
-  updateControls();
-  stopRotation();
-  isRotating = false;
-};
-
-const playAd = () => {
-  if (anuncios.length === 0) return;
-
-  const adIndex = getNextAdIndex();
-  const adPath = "/audios/" + anuncios[adIndex];
-
-  audioAds.src = adPath;
-  audioAds.onloadedmetadata = () => {
-    pauseSong();
-    audioAds.play();
-
-    setTimeout(() => {
-      playNextSongOrAd();
-      changeSongtitle(actualSong);
-    }, audioAds.duration * 1000);
-  };
-};
-
-const getNextAdIndex = () => {
-  if (anuncios.length === 1) return 0;
-  return Math.floor(Math.random() * anuncios.length);
-};
-
-const playNextSongOrAd = () => {
-  if (audioPlayer.currentTime >= adDuration) {
-    playAd();
-  } else {
-    nextSong();
-  }
-};
-
-const updateProgress = () => {
-  const { duration, currentTime } = audioPlayer;
-
-  if (
-    Number.isFinite(duration) &&
-    Number.isFinite(currentTime) &&
-    duration !== 0
-  ) {
-    const percent = (currentTime / duration) * 100;
-    range.value = percent;
-    range.style.setProperty("--progress", percent);
-    document.querySelector(".start").textContent = formatTime(currentTime);
-    document.querySelector(".end").textContent = formatTime(duration);
-  }
-};
-
-const setProgress = (event) => {
-  const totalWidth = range.offsetWidth;
-  const progressWidth = event.offsetX;
-  const current = (progressWidth / totalWidth) * audioPlayer.duration;
-  audioPlayer.currentTime = current;
-};
-
-const rewindOrPrevious = () => {
-  if (audioPlayer.currentTime <= 5) {
-    if (actualSong > 0) {
-      loadSong(actualSong - 1);
-      socket.emit("playMusic", actualSong);
-    }
-  } else {
-    audioPlayer.currentTime = 0;
-  }
-};
-
-const handleSongEnd = () => {
-  if (audioPlayer.currentTime >= adDuration) {
-    playAd();
-  } else {
-    nextSong();
-  }
-};
-
-// Resto de las funciones (getRandomSongIndex, loadSong, rotateImage, etc.)
-
 const getRandomSongIndex = () => {
   return Math.floor(Math.random() * canciones.length);
 };
@@ -167,6 +63,7 @@ const getRandomSongIndex = () => {
 const loadSong = (songIndex) => {
   if (songIndex !== actualSong) {
     actualSong = songIndex;
+    socket.emit("playMusic", canciones[songIndex]);
     audioPlayer.src = "/music/" + canciones[songIndex];
     playSong();
     changeSongtitle(songIndex);
@@ -194,15 +91,141 @@ const updateControls = () => {
   }
 };
 
-const changeSongtitle = (songIndex) => {
-  titulo.innerText = canciones[songIndex];
+const updateProgress = () => {
+  const { duration, currentTime } = audioPlayer;
+
+  // Verificar si duration y currentTime son números finitos
+  if (
+    Number.isFinite(duration) &&
+    Number.isFinite(currentTime) &&
+    duration !== 0
+  ) {
+    const percent = (currentTime / duration) * 100;
+    range.value = percent;
+    range.style.setProperty("--progress", percent);
+    document.querySelector(".start").textContent = formatTime(currentTime);
+    document.querySelector(".end").textContent = formatTime(duration);
+  }
 };
 
-const padTime = (time) => {
-  if (typeof time !== "number") {
-    return time;
+const setProgress = (event) => {
+  const totalWidth = range.offsetWidth;
+  const progressWidth = event.offsetX;
+  const current = (progressWidth / totalWidth) * audioPlayer.duration;
+  audioPlayer.currentTime = current;
+};
+
+const playSong = () => {
+  if (actualSong !== null) {
+    if (audioPlayer.currentTime > 0) {
+      audioPlayer.play();
+    } else {
+      audioPlayer.play();
+    }
+    updateControls();
+    if (!isRotating) {
+      rotateImage();
+      isRotating = true;
+    }
   }
-  return time < 10 ? "0" + time : time;
+};
+
+const pauseSong = () => {
+  audioPlayer.pause();
+  updateControls();
+  stopRotation();
+  isRotating = false;
+};
+
+let adIndices = shuffleArray([...Array(anuncios.length).keys()]); // Mezclar los índices de los anuncios
+
+// Función para mezclar un arreglo de manera aleatoria
+function shuffleArray(array) {
+  const shuffled = array.slice();
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
+
+// En la función playAd
+const playAd = () => {
+  if (adIndices.length === 0) {
+    // Todos los anuncios han sido reproducidos, mezcla nuevamente
+    adIndices = shuffleArray([...Array(anuncios.length).keys()]);
+  }
+
+  const nextAdIndex = adIndices.shift();
+
+  audioAds.src = "/audios/" + anuncios[nextAdIndex];
+
+  audioAds.onloadedmetadata = () => {
+    pauseSong();
+    audioAds.play();
+
+    setTimeout(() => {
+      nextSong();
+      hasPlayedAd = false;
+      changeSongtitle(actualSong, null); // Cambiar el título de la canción
+    }, audioAds.duration * 1000);
+
+    changeSongtitle(actualSong, nextAdIndex); // Cambiar el título del anuncio
+  };
+};
+
+const changeSongtitle = (songIndex, adIndex) => {
+  if (typeof adIndex !== "undefined" && adIndex !== null) {
+    titulo.innerText = anuncios[adIndex];
+  } else {
+    titulo.innerText = canciones[songIndex];
+  }
+};
+
+const nextSong = () => {
+  const randomIndex = getRandomSongIndex();
+  loadSong(randomIndex);
+};
+
+const togglePlay = () => {
+  if (audioPlayer.paused) {
+    if (primeraVez) {
+      const randomIndex = Math.floor(Math.random() * canciones.length);
+      loadSong(randomIndex);
+      primeraVez = false;
+    } else {
+      playSong();
+    }
+  } else {
+    pauseSong();
+  }
+};
+
+const handleSongEnd = () => {
+  // Verificar si han pasado dos minutos y no se ha mostrado el anuncio aún
+  if (audioPlayer.currentTime >= adDuration && !hasPlayedAd) {
+    playAd(adIndex);
+    hasPlayedAd = true; // Marcar el anuncio como reproducido para evitar que se repita
+  } else {
+    nextSong(); // Ir a la siguiente canción al finalizar la actual
+  }
+};
+
+const playNextSongOrAd = () => {
+  nextSong();
+  socket.emit("playMusic", actualSong); // Emitir evento de reproducción al servidor
+};
+
+const rewindOrPrevious = () => {
+  if (audioPlayer.currentTime <= 5) {
+    // Retrocede si el tiempo actual es menor o igual a 5 segundos
+    if (actualSong > 0) {
+      loadSong(actualSong - 1);
+      socket.emit("playMusic", actualSong); // Emitir evento de reproducción al servidor
+    }
+  } else {
+    audioPlayer.currentTime = 0; // Reinicia la canción si el tiempo actual es mayor a 5 segundos
+  }
 };
 
 const formatTime = (time) => {
@@ -211,5 +234,11 @@ const formatTime = (time) => {
   return padTime(minutes) + ":" + padTime(seconds);
 };
 
-// Inicializar la función principal
-iniciar();
+const padTime = (time) => {
+  if (typeof time !== "number") {
+    return time; // Si el tiempo no es un número, devuelve el valor sin modificar
+  }
+  return time < 10 ? "0" + time : time;
+};
+
+init();

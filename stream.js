@@ -5,53 +5,25 @@ const http = require("http").createServer(app);
 const fs = require("fs");
 const path = require("path");
 const ffmpeg = require("fluent-ffmpeg");
+const socketIOClient = require("socket.io-client");
 
 const PORT = 3006;
 
 const musicFolder = path.join(__dirname, "public", "music");
-const adsFolder = path.join(__dirname, "public", "audios");
-const adInterval = 1200000; // Intervalo de 2 minutos en milisegundos
+let currentFilePath = null; // Almacena la ruta completa del archivo de música actual
 
-let musicFiles = [];
-let adsFiles = [];
-let currentFileIndex = 0; // Índice para alternar entre canciones y anuncios
+// Establece la conexión con el servidor en localhost:3005
+const socket = socketIOClient("http://localhost:3005");
 
 app.use(express.static("public"));
 app.use(compression());
 
-function loadFiles(folderPath) {
-  return new Promise((resolve, reject) => {
-    fs.readdir(folderPath, (err, files) => {
-      if (err) {
-        reject(err);
-        return;
-      }
-      resolve(files.map((file) => path.join(folderPath, file)));
-    });
-  });
-}
-
-async function initialize() {
-  try {
-    musicFiles = await loadFiles(musicFolder);
-    adsFiles = await loadFiles(adsFolder);
-    shuffleArray(musicFiles);
-    shuffleArray(adsFiles);
-  } catch (error) {
-    console.error("Error al cargar los archivos:", error);
-  }
-}
-
-function shuffleArray(array) {
-  for (let i = array.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [array[i], array[j]] = [array[j], array[i]];
-  }
-}
+// Escucha el evento playMusic emitido desde localhost:3005
+socket.on("playMusic", (songIndex) => {
+  currentFilePath = path.join(musicFolder, songIndex);
+});
 
 app.get("/stream", (req, res) => {
-  const currentFilePath = getNextItemPath();
-
   if (!currentFilePath) {
     res.status(500).send("No hay archivos disponibles para reproducir.");
     return;
@@ -86,34 +58,8 @@ app.get("/stream", (req, res) => {
     res.setHeader("Content-Type", "audio/mpeg");
     res.set("transfer-encoding", "chunked");
     audioStream.pipe(res);
-
-    audioStream.on("end", () => {
-      setTimeout(() => {
-        res.end(); // Finaliza la transmisión
-      }, adInterval);
-    });
   });
 });
-
-function getNextItemPath() {
-  const currentFilePath =
-    currentFileIndex % 2 === 0 ? musicFiles.shift() : adsFiles.shift();
-
-  if (currentFileIndex % 2 === 0) {
-    if (musicFiles.length === 0) {
-      shuffleArray(musicFiles);
-    }
-  } else {
-    if (adsFiles.length === 0) {
-      shuffleArray(adsFiles);
-    }
-  }
-
-  currentFileIndex++;
-  return currentFilePath;
-}
-
-initialize();
 
 http.listen(PORT, () => {
   console.log(`Servidor de streaming iniciado en el puerto ${PORT}`);
