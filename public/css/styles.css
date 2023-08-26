@@ -407,9 +407,6 @@ select {
 .player__duration {
   width: 86%;
   margin: 10px;
-  display: grid;
-  justify-content: center;
-  align-items: center;
 }
 
 .audio-duration {

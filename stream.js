@@ -64,7 +64,6 @@ app.get("/stream", (req, res) => {
 socket.on("play", (cancion) => {
   const nombreArchivo = cancion.split("/").pop(); // Obtiene el último segmento de la ruta
   currentSong = nombreArchivo;
-  // Iniciar la reproducción de la canción aquí si lo deseas
 });
 
 http.listen(PORT, () => {

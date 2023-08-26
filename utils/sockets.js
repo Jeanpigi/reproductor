@@ -2,8 +2,11 @@ const socketIO = require("socket.io");
 const fs = require("fs").promises;
 const path = require("path");
 
-module.exports = function (server, baseDir) {
-  const io = socketIO(server);
+module.exports = (server, baseDir) => {
+  const io = socketIO(server, {
+    reconnection: true,
+    reconnectionDelay: 1000,
+  });
 
   // Almacenar las conexiones de clientes
   const clients = {};
@@ -25,13 +28,12 @@ module.exports = function (server, baseDir) {
       const carpetaMusica = path.join(baseDir, "public", "music");
       try {
         const archivos = await fs.readdir(carpetaMusica);
-        const rutasRelativas = archivos.map((archivo) =>
+        return archivos.map((archivo) =>
           path.relative(
             path.join(baseDir, "public"),
             path.join(carpetaMusica, archivo)
           )
         );
-        return rutasRelativas;
       } catch (err) {
         console.log("Error al leer la carpeta de música:", err);
         return [];
