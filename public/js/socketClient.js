@@ -1,15 +1,22 @@
-const playButton = document.getElementById("play-button");
-const play = document.getElementById("play-btn");
-const playerImage = document.getElementById("player-image");
-const audioPlayer = document.getElementById("audio-player");
-const audioAds = document.getElementById("audio-ads");
-const titulo = document.getElementById("titulo");
-const range = document.getElementById("duration__range");
-const forwardButton = document.getElementById("forward");
-const backwardButton = document.getElementById("backward");
+const elements = {
+  playButton: document.getElementById("play-button"),
+  play: document.getElementById("play-btn"),
+  playerImage: document.getElementById("player-image"),
+  audioPlayer: document.getElementById("audio-player"),
+  audioAds: document.getElementById("audio-ads"),
+  titulo: document.getElementById("titulo"),
+  range: document.getElementById("duration__range"),
+  forwardButton: document.getElementById("forward"),
+  backwardButton: document.getElementById("backward"),
+  recordButton: document.getElementById("record-button"),
+  recordIcon: document.getElementById("record-icon"),
+};
 
 // Establecer conexión con el servidor
 let socket = io();
+
+elements.range.disabled = true;
+
 let canciones = [];
 let anuncios = [];
 let actualSong = null;
@@ -20,32 +27,40 @@ let adDuration = 120;
 // const adDuration = 7200; // Duración del anuncio en segundos (2 horas)
 let hasPlayedAd = false;
 let isDragging = false;
-range.disabled = true;
-
 let adIndex = 0;
+let isMicrophoneActive = false;
+let originalMusicVolume = 1.0;
 
 const init = () => {
+  attachEventListeners();
+  initializeAudioContext();
+};
+
+const attachEventListeners = () => {
   socket.on("canciones", handleCancion);
   socket.on("anuncios", handleAnuncio);
+  socket.on("sync", currentSong);
 
-  playButton.addEventListener("click", togglePlay);
-  range.addEventListener("input", updateProgress);
-  range.addEventListener("mousedown", () => {
-    isDragging = true;
-  });
-  range.addEventListener("mouseup", () => {
-    isDragging = false;
-  });
-  range.addEventListener("click", (event) => {
-    if (!isDragging) {
-      setProgress(event);
-    }
-  });
+  elements.playButton.addEventListener("click", togglePlay);
+  elements.range.addEventListener("input", updateProgress);
+  elements.range.addEventListener("mousedown", () => (isDragging = true));
+  elements.range.addEventListener("mouseup", () => (isDragging = false));
+  elements.range.addEventListener(
+    "click",
+    (event) => !isDragging && setProgress(event)
+  );
 
-  forwardButton.addEventListener("click", playNextSongOrAd);
-  backwardButton.addEventListener("click", rewindOrPrevious);
-  audioPlayer.addEventListener("timeupdate", updateProgress);
-  audioPlayer.addEventListener("ended", handleSongEnd);
+  elements.forwardButton.addEventListener("click", nextSong);
+  elements.backwardButton.addEventListener("click", backSong);
+  elements.audioPlayer.addEventListener("timeupdate", updateProgress);
+  elements.audioPlayer.addEventListener("ended", handleSongEnd);
+
+  elements.recordButton.addEventListener("click", handleMicrophone);
+};
+
+const initializeAudioContext = () => {
+  const AudioContext = window.AudioContext || window.webkitAudioContext;
+  audioContext = new AudioContext();
 };
 
 const handleCancion = ({ nombreCancion, extension }) => {
@@ -56,6 +71,10 @@ const handleAnuncio = ({ nombreAnuncio, extension }) => {
   anuncios.push(nombreAnuncio + extension);
 };
 
+const currentSong = (currentTime) => {
+  elements.audioPlayer.currentTime = parseFloat(currentTime);
+};
+
 const getRandomSongIndex = () => {
   return Math.floor(Math.random() * canciones.length);
 };
@@ -63,15 +82,70 @@ const getRandomSongIndex = () => {
 const loadSong = (songIndex) => {
   if (songIndex !== actualSong) {
     actualSong = songIndex;
+    const songUrl = `/music/${canciones[songIndex]}`;
     socket.emit("playMusic", canciones[songIndex]);
-    audioPlayer.src = "/music/" + canciones[songIndex];
+    elements.audioPlayer.src = songUrl;
     playSong();
     changeSongtitle(songIndex);
   }
 };
 
+const handleMicrophone = () => {
+  console.log("Microphone is clicked");
+  isMicrophoneActive = !isMicrophoneActive; // Cambiar el estado del micrófono
+
+  startMicrophone();
+
+  // Restaurar el volumen de la música y detener el micrófono si ya no está activo
+  if (!isMicrophoneActive) {
+    elements.audioPlayer.volume = originalMusicVolume;
+  }
+
+  elements.recordButton.classList.toggle("orange", isMicrophoneActive);
+};
+
+const startMicrophone = async () => {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+    const audioContext = new AudioContext();
+    const microphoneNode = audioContext.createMediaStreamSource(stream);
+
+    // Crear nodo para controlar el volumen del micrófono
+    const gainNode = audioContext.createGain();
+    gainNode.gain.value = isMicrophoneActive ? 2.0 : 0.5;
+
+    // Conectar el nodo de volumen del micrófono a un nodo de mezcla
+    const mixerNode = audioContext.createGain();
+    gainNode.connect(mixerNode);
+
+    // Conectar el nodo de mezcla al nodo de salida (altavoces)
+    const speakersNode = audioContext.destination;
+    mixerNode.connect(speakersNode);
+
+    // Conectar también el nodo de música al nodo de mezcla
+    elements.audioPlayer.connect(mixerNode);
+
+    // Cambiar el volumen de la música según el estado del micrófono
+    elements.audioPlayer.volume = isMicrophoneActive
+      ? 0.5
+      : originalMusicVolume;
+
+    // Actualizar el volumen original de la música si se activa/desactiva el micrófono
+    if (isMicrophoneActive) {
+      originalMusicVolume = elements.audioPlayer.volume;
+    }
+  } catch (error) {
+    if (error.name === "NotAllowedError") {
+      console.log("El usuario ha denegado el acceso al micrófono.");
+    } else {
+      console.error("Error al acceder al micrófono:", error);
+    }
+  }
+};
+
 const rotateImage = () => {
-  playerImage.style.transform += "rotate(1deg)";
+  elements.playerImage.style.transform += "rotate(1deg)";
   animationId = requestAnimationFrame(rotateImage);
 };
 
@@ -80,19 +154,14 @@ const stopRotation = () => {
 };
 
 const updateControls = () => {
-  if (audioPlayer.paused) {
-    play.classList.remove("fa-pause");
-    play.classList.add("fa-play");
-    playButton.classList.remove("orange");
-  } else {
-    play.classList.add("fa-pause");
-    play.classList.remove("fa-play");
-    playButton.classList.add("orange");
-  }
+  const isPaused = elements.audioPlayer.paused;
+  elements.play.classList.toggle("fa-play", isPaused);
+  elements.play.classList.toggle("fa-pause", !isPaused);
+  elements.playButton.classList.toggle("orange", !isPaused);
 };
 
 const updateProgress = () => {
-  const { duration, currentTime } = audioPlayer;
+  const { duration, currentTime } = elements.audioPlayer;
 
   // Verificar si duration y currentTime son números finitos
   if (
@@ -101,27 +170,23 @@ const updateProgress = () => {
     duration !== 0
   ) {
     const percent = (currentTime / duration) * 100;
-    range.value = percent;
-    range.style.setProperty("--progress", percent);
+    elements.range.value = percent;
+    elements.range.style.setProperty("--progress", `${percent}%`);
     document.querySelector(".start").textContent = formatTime(currentTime);
     document.querySelector(".end").textContent = formatTime(duration);
   }
 };
 
 const setProgress = (event) => {
-  const totalWidth = range.offsetWidth;
-  const progressWidth = event.offsetX;
+  const { offsetWidth: totalWidth } = range;
+  const { offsetX: progressWidth } = event;
   const current = (progressWidth / totalWidth) * audioPlayer.duration;
-  audioPlayer.currentTime = current;
+  elements.audioPlayer.currentTime = current;
 };
 
 const playSong = () => {
-  if (actualSong !== null) {
-    if (audioPlayer.currentTime > 0) {
-      audioPlayer.play();
-    } else {
-      audioPlayer.play();
-    }
+  if (actualSong !== null || elements.audioPlayer.currentTime > 0) {
+    elements.audioPlayer.play();
     updateControls();
     if (!isRotating) {
       rotateImage();
@@ -131,55 +196,51 @@ const playSong = () => {
 };
 
 const pauseSong = () => {
-  audioPlayer.pause();
+  elements.audioPlayer.pause();
   updateControls();
   stopRotation();
   isRotating = false;
 };
 
-let adIndices = shuffleArray([...Array(anuncios.length).keys()]); // Mezclar los índices de los anuncios
-
-// Función para mezclar un arreglo de manera aleatoria
-function shuffleArray(array) {
-  const shuffled = array.slice();
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+const shuffleArray = (array) => {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = (Math.random() * (i + 1)) | 0;
+    [array[i], array[j]] = [array[j], array[i]];
   }
-  return shuffled;
-}
+  return array;
+};
 
-// En la función playAd
+let adIndices = shuffleArray([...Array(anuncios.length).keys()]);
+
 const playAd = () => {
   if (adIndices.length === 0) {
-    // Todos los anuncios han sido reproducidos, mezcla nuevamente
     adIndices = shuffleArray([...Array(anuncios.length).keys()]);
   }
 
-  const nextAdIndex = adIndices.shift();
+  const nextAdIndex = adIndices.shift(); // Obtén y elimina el próximo índice de anuncio
 
-  audioAds.src = "/audios/" + anuncios[nextAdIndex];
+  elements.audioAds.src = "/audios/" + anuncios[nextAdIndex];
 
-  audioAds.onloadedmetadata = () => {
+  elements.audioAds.onloadedmetadata = () => {
     pauseSong();
-    audioAds.play();
+    elements.audioAds.play();
 
     setTimeout(() => {
       nextSong();
       hasPlayedAd = false;
-      changeSongtitle(actualSong, null); // Cambiar el título de la canción
-    }, audioAds.duration * 1000);
+      changeSongtitle(actualSong, null);
+    }, elements.audioAds.duration * 1000);
 
-    changeSongtitle(actualSong, nextAdIndex); // Cambiar el título del anuncio
+    changeSongtitle(actualSong, nextAdIndex);
   };
 };
 
 const changeSongtitle = (songIndex, adIndex) => {
-  if (typeof adIndex !== "undefined" && adIndex !== null) {
-    titulo.innerText = anuncios[adIndex];
-  } else {
-    titulo.innerText = canciones[songIndex];
-  }
+  const text =
+    typeof adIndex !== "undefined" && adIndex !== null
+      ? anuncios[adIndex]
+      : canciones[songIndex];
+  elements.titulo.textContent = text;
 };
 
 const nextSong = () => {
@@ -188,7 +249,7 @@ const nextSong = () => {
 };
 
 const togglePlay = () => {
-  if (audioPlayer.paused) {
+  if (elements.audioPlayer.paused) {
     if (primeraVez) {
       const randomIndex = Math.floor(Math.random() * canciones.length);
       loadSong(randomIndex);
@@ -196,49 +257,46 @@ const togglePlay = () => {
     } else {
       playSong();
     }
+    socket.on("resumeStream");
   } else {
     pauseSong();
+    socket.emit("pauseMusic");
   }
 };
 
 const handleSongEnd = () => {
-  // Verificar si han pasado dos minutos y no se ha mostrado el anuncio aún
-  if (audioPlayer.currentTime >= adDuration && !hasPlayedAd) {
+  if (isMicrophoneActive) {
+    console.log("Micrófono activo. No se pueden reproducir anuncios.");
+    nextSong();
+    return;
+  }
+
+  if (elements.audioPlayer.currentTime >= adDuration && !hasPlayedAd) {
     playAd(adIndex);
-    hasPlayedAd = true; // Marcar el anuncio como reproducido para evitar que se repita
+    hasPlayedAd = true;
   } else {
-    nextSong(); // Ir a la siguiente canción al finalizar la actual
+    nextSong();
   }
 };
 
-const playNextSongOrAd = () => {
-  nextSong();
-  socket.emit("playMusic", actualSong); // Emitir evento de reproducción al servidor
-};
-
-const rewindOrPrevious = () => {
-  if (audioPlayer.currentTime <= 5) {
-    // Retrocede si el tiempo actual es menor o igual a 5 segundos
-    if (actualSong > 0) {
-      loadSong(actualSong - 1);
-      socket.emit("playMusic", actualSong); // Emitir evento de reproducción al servidor
-    }
+const backSong = () => {
+  if (elements.audioPlayer.currentTime <= 5 && actualSong > 0) {
+    loadSong(actualSong - 1);
   } else {
-    audioPlayer.currentTime = 0; // Reinicia la canción si el tiempo actual es mayor a 5 segundos
+    elements.audioPlayer.currentTime = 0;
   }
 };
-
 const formatTime = (time) => {
   const minutes = Math.floor(time / 60);
   const seconds = Math.floor(time % 60);
-  return padTime(minutes) + ":" + padTime(seconds);
+  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(
+    2,
+    "0"
+  )}`;
 };
 
 const padTime = (time) => {
-  if (typeof time !== "number") {
-    return time; // Si el tiempo no es un número, devuelve el valor sin modificar
-  }
-  return time < 10 ? "0" + time : time;
+  return typeof time !== "number" ? time : time < 10 ? "0" + time : time;
 };
 
 init();
