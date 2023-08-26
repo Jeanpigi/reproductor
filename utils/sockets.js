@@ -1,9 +1,14 @@
 const socketIO = require("socket.io");
-const fs = require("fs");
+const fs = require("fs").promises;
 const path = require("path");
 
-module.exports = function (server) {
-  const io = socketIO(server);
+module.exports = (server, baseDir) => {
+  const io = socketIO(server, {
+    reconnection: true,
+    reconnectionDelay: 1000,
+  });
+
+  // Almacenar las conexiones de clientes
   const clients = {};
 
   io.on("connection", (socket) => {
@@ -12,61 +17,78 @@ module.exports = function (server) {
     clients[socket.id] = socket;
     const numClients = Object.keys(clients).length;
     console.log(`Número de clientes conectados: ${numClients}`);
-    sendSongsToClient(socket);
-    sendAdsToClient(socket);
 
-    socket.on("sync", (currentTime) => {
-      Object.values(clients).forEach((client) => {
-        if (client !== socket) {
-          client.emit("sync", currentTime);
-        }
-      });
-    });
-
-    const broadcastEvent = (eventName, data) => {
-      socket.broadcast.emit(eventName, data);
+    // Obtiene las canciones desde la carpeta music en public
+    const getSongs = async () => {
+      const carpetaMusica = path.join(baseDir, "public", "music");
+      try {
+        const archivos = await fs.readdir(carpetaMusica);
+        return archivos.map((archivo) =>
+          path.relative(
+            path.join(baseDir, "public"),
+            path.join(carpetaMusica, archivo)
+          )
+        );
+      } catch (err) {
+        console.log("Error al leer la carpeta de música:", err);
+        return [];
+      }
     };
 
-    socket.on("playMusic", broadcastEvent.bind(null, "playMusic"));
-    socket.on("pauseMusic", broadcastEvent.bind(null, "pauseMusic"));
-    socket.on("resumeStream", broadcastEvent.bind(null, "resumeStream"));
-    socket.on("playAd", broadcastEvent.bind(null, "playAd"));
+    const getAds = async () => {
+      const carpetaAudios = path.join(baseDir, "public", "audios");
+      try {
+        const archivos = await fs.readdir(carpetaAudios);
+        const rutasRelativas = archivos.map((archivo) =>
+          path.relative(
+            path.join(baseDir, "public"),
+            path.join(carpetaAudios, archivo)
+          )
+        );
+        return rutasRelativas;
+      } catch (err) {
+        console.log("Error al leer la carpeta de audios:", err);
+        return [];
+      }
+    };
+
+    // selecciona una canción aleatoriamente del array que se pase
+    const obtenerAudioAleatoria = (array) => {
+      const randomIndex = Math.floor(Math.random() * array.length);
+      return array[randomIndex]; // Devuelve un elemento aleatorio del arreglo
+    };
+
+    socket.on("play", () => {
+      getSongs()
+        .then((songs) => {
+          const randomSong = obtenerAudioAleatoria(songs);
+
+          io.emit("play", randomSong);
+        })
+        .catch((error) => {
+          console.error("Error al obtener las canciones:", error);
+        });
+    });
+
+    socket.on("pause", () => {
+      io.emit("pause");
+    });
+
+    socket.on("ads", () => {
+      getAds()
+        .then((ads) => {
+          const randomAds = obtenerAudioAleatoria(ads);
+
+          io.emit("playAd", randomAds);
+        })
+        .catch((error) => {
+          console.error("Error al obtener el anuncio", error);
+        });
+    });
 
     socket.on("disconnect", () => {
       console.log("Cliente desconectado");
       delete clients[socket.id];
     });
-  });
-};
-
-const sendSongsToClient = (socket) => {
-  const carpetaMusica = "public/music";
-  const archivos = fs.readdirSync(carpetaMusica);
-
-  const canciones = archivos.filter((archivo) => {
-    const extension = archivo.split(".").pop();
-    return extension === "mp3" || extension === "m4a";
-  });
-
-  canciones.forEach((cancion) => {
-    const { name: nombreCancion, ext: extension } = path.parse(cancion);
-    socket.emit("canciones", { nombreCancion, extension });
-  });
-};
-
-const sendAdsToClient = (socket) => {
-  const carpetaAnuncios = "public/audios";
-  const archivos = fs.readdirSync(carpetaAnuncios);
-
-  const anuncios = archivos.filter((archivo) => {
-    const extension = archivo.split(".").pop();
-    return extension === "mp3";
-  });
-
-  anuncios.forEach((cancion) => {
-    const nombreAnuncio = path.parse(cancion).name;
-    const extension = path.parse(cancion).ext;
-
-    socket.emit("anuncios", { nombreAnuncio, extension });
   });
 };

@@ -66,6 +66,15 @@ a {
   font-weight: 800;
 }
 
+.volume-icon {
+  font-size: 18px;
+  /* Tamaño del icono */
+  color: #333;
+  /* Color del icono */
+  margin-right: 5px;
+  /* Espaciado a la derecha del icono */
+}
+
 /* Estilos de contenido de la mitad*/
 .container {
   display: grid;

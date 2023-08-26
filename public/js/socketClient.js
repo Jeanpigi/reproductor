@@ -1,139 +1,114 @@
+// Elementos del DOM
 const elements = {
   playButton: document.getElementById("play-button"),
   play: document.getElementById("play-btn"),
-  playerImage: document.getElementById("player-image"),
   audioPlayer: document.getElementById("audio-player"),
-  audioAds: document.getElementById("audio-ads"),
+  playerImage: document.getElementById("player-image"),
   titulo: document.getElementById("titulo"),
   range: document.getElementById("duration__range"),
   forwardButton: document.getElementById("forward"),
   backwardButton: document.getElementById("backward"),
   recordButton: document.getElementById("record-button"),
-  recordIcon: document.getElementById("record-icon"),
 };
 
-// Establecer conexión con el servidor
-let socket = io();
+// Configuración inicial
+let settings = {
+  isRotating: false,
+  pausedTime: 0,
+  animationId: null,
+  isDragging: false,
+  isPlaying: false,
+  adDuration: 300, // Duración del anuncio en segundos (5 minutos)
+  accumulatedDuration: 0,
+  originalMusicVolume: 1,
+  isMicrophoneActive: false,
+};
 
-elements.range.disabled = true;
+const socket = io();
 
-let canciones = [];
-let anuncios = [];
-let actualSong = null;
-let isRotating = false;
-let animationId;
-let primeraVez = true;
-let adDuration = 120;
-// const adDuration = 7200; // Duración del anuncio en segundos (2 horas)
-let hasPlayedAd = false;
-let isDragging = false;
-let adIndex = 0;
-let isMicrophoneActive = false;
-let originalMusicVolume = 1.0;
+let isPausedByUser = false;
 
 const init = () => {
-  attachEventListeners();
-  initializeAudioContext();
+  elements.range.disabled = true;
+  bindEvents();
 };
 
-const attachEventListeners = () => {
-  socket.on("canciones", handleCancion);
-  socket.on("anuncios", handleAnuncio);
-  socket.on("sync", currentSong);
+const bindEvents = () => {
+  socket.on("connect", () => {
+    console.log("Conectado al servidor");
+  });
 
-  elements.playButton.addEventListener("click", togglePlay);
-  elements.range.addEventListener("input", updateProgress);
-  elements.range.addEventListener("mousedown", () => (isDragging = true));
-  elements.range.addEventListener("mouseup", () => (isDragging = false));
-  elements.range.addEventListener(
-    "click",
-    (event) => !isDragging && setProgress(event)
-  );
+  socket.on("disconnect", () => {
+    console.log("Se ha perdido la conexión con el servidor");
+    socket.connect();
+  });
 
+  socket.on("play", handleSocketPlay);
+  socket.on("playAd", handleSocketPlayAd);
+
+  elements.playButton.addEventListener("click", handlePlayButtonClick);
   elements.forwardButton.addEventListener("click", nextSong);
-  elements.backwardButton.addEventListener("click", backSong);
-  elements.audioPlayer.addEventListener("timeupdate", updateProgress);
-  elements.audioPlayer.addEventListener("ended", handleSongEnd);
-
+  elements.range.addEventListener("input", updateProgress);
+  elements.range.addEventListener("mousedown", () => {
+    settings.isDragging = true;
+  });
+  elements.range.addEventListener("mouseup", () => {
+    settings.isDragging = false;
+  });
+  elements.range.addEventListener("click", (event) => {
+    if (!settings.isDragging) setProgress(event);
+  });
+  elements.audioPlayer.addEventListener("loadedmetadata", function () {
+    console.log("La duración del audio es: ", elements.audioPlayer.duration);
+    settings.accumulatedDuration += parseFloat(elements.audioPlayer.duration);
+    updateProgress();
+  });
+  elements.audioPlayer.addEventListener(
+    "timeupdate",
+    debounce(updateProgress, 100)
+  );
+  elements.audioPlayer.addEventListener("ended", handleAudioEnded);
   elements.recordButton.addEventListener("click", handleMicrophone);
-};
-
-const initializeAudioContext = () => {
-  const AudioContext = window.AudioContext || window.webkitAudioContext;
-  audioContext = new AudioContext();
-};
-
-const handleCancion = ({ nombreCancion, extension }) => {
-  canciones.push(nombreCancion + extension);
-};
-
-const handleAnuncio = ({ nombreAnuncio, extension }) => {
-  anuncios.push(nombreAnuncio + extension);
-};
-
-const currentSong = (currentTime) => {
-  elements.audioPlayer.currentTime = parseFloat(currentTime);
-};
-
-const getRandomSongIndex = () => {
-  return Math.floor(Math.random() * canciones.length);
-};
-
-const loadSong = (songIndex) => {
-  if (songIndex !== actualSong) {
-    actualSong = songIndex;
-    const songUrl = `/music/${canciones[songIndex]}`;
-    socket.emit("playMusic", canciones[songIndex]);
-    elements.audioPlayer.src = songUrl;
-    playSong();
-    changeSongtitle(songIndex);
-  }
 };
 
 const handleMicrophone = () => {
   console.log("Microphone is clicked");
-  isMicrophoneActive = !isMicrophoneActive; // Cambiar el estado del micrófono
+  settings.isMicrophoneActive = !settings.isMicrophoneActive; // Cambiar el estado del micrófono
 
   startMicrophone();
 
   // Restaurar el volumen de la música y detener el micrófono si ya no está activo
-  if (!isMicrophoneActive) {
-    elements.audioPlayer.volume = originalMusicVolume;
+  if (!settings.isMicrophoneActive) {
+    elements.audioPlayer.volume = settings.originalMusicVolume;
   }
 
-  elements.recordButton.classList.toggle("orange", isMicrophoneActive);
+  elements.recordButton.classList.toggle("orange", settings.isMicrophoneActive);
 };
 
 const startMicrophone = async () => {
   try {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-
     const audioContext = new AudioContext();
     const microphoneNode = audioContext.createMediaStreamSource(stream);
 
     // Crear nodo para controlar el volumen del micrófono
     const gainNode = audioContext.createGain();
-    gainNode.gain.value = isMicrophoneActive ? 2.0 : 0.5;
+    gainNode.gain.value = settings.isMicrophoneActive ? 2.0 : 0.5;
 
-    // Conectar el nodo de volumen del micrófono a un nodo de mezcla
-    const mixerNode = audioContext.createGain();
-    gainNode.connect(mixerNode);
+    // Conectar el nodo del micrófono al nodo de ganancia
+    microphoneNode.connect(gainNode);
 
-    // Conectar el nodo de mezcla al nodo de salida (altavoces)
-    const speakersNode = audioContext.destination;
-    mixerNode.connect(speakersNode);
-
-    // Conectar también el nodo de música al nodo de mezcla
-    elements.audioPlayer.connect(mixerNode);
+    // Conectar el nodo de ganancia al nodo de salida (altavoces)
+    gainNode.connect(audioContext.destination);
 
     // Cambiar el volumen de la música según el estado del micrófono
-    elements.audioPlayer.volume = isMicrophoneActive
+    elements.audioPlayer.volume = settings.isMicrophoneActive
       ? 0.5
-      : originalMusicVolume;
+      : settings.originalMusicVolume;
 
     // Actualizar el volumen original de la música si se activa/desactiva el micrófono
-    if (isMicrophoneActive) {
-      originalMusicVolume = elements.audioPlayer.volume;
+    if (!settings.isMicrophoneActive) {
+      settings.originalMusicVolume = elements.audioPlayer.volume;
     }
   } catch (error) {
     if (error.name === "NotAllowedError") {
@@ -144,54 +119,117 @@ const startMicrophone = async () => {
   }
 };
 
+const handlePlayButtonClick = () => {
+  if (elements.audioPlayer.paused) {
+    if (settings.isPlaying) {
+      playSong();
+      console.log("Ingresando cuando isPlayig in handlePlayButtonClick");
+    } else {
+      if (isPausedByUser) {
+        elements.audioPlayer.currentTime = settings.pausedTime;
+        isPausedByUser = false;
+        console.log("IspausedByUser in handlePlayButtonClick");
+      } else {
+        socket.emit("play");
+        console.log(
+          "Ingresando cuando play del socket in handlePlayButtonClick"
+        );
+      }
+      settings.isPlaying = true;
+    }
+  } else {
+    pauseSong();
+    socket.emit("pause");
+    console.log("Ingresando cuando pause del socket in handlePlayButtonClick");
+  }
+};
+
+const handleSocketPlay = (cancion) => {
+  console.log("Reproduciendo cancion:", cancion);
+  elements.audioPlayer.src = cancion;
+  playSong(cancion);
+  changeSongtitle(cancion);
+};
+
+const handleAudioEnded = () => {
+  if (settings.accumulatedDuration >= settings.adDuration) {
+    socket.emit("ads");
+    settings.accumulatedDuration = 0;
+  } else {
+    nextSong();
+  }
+};
+
+const handleSocketPlayAd = (ad) => {
+  console.log("Reproduciendo anuncio:", ad);
+  elements.audioPlayer.src = ad;
+  playSong(ad);
+};
+
 const rotateImage = () => {
-  elements.playerImage.style.transform += "rotate(1deg)";
-  animationId = requestAnimationFrame(rotateImage);
+  if (settings.isPlaying) {
+    elements.playerImage.style.transform += "rotate(1deg)";
+    settings.animationId = requestAnimationFrame(rotateImage);
+  }
 };
 
 const stopRotation = () => {
-  cancelAnimationFrame(animationId);
+  cancelAnimationFrame(settings.animationId);
 };
 
 const updateControls = () => {
   const isPaused = elements.audioPlayer.paused;
-  elements.play.classList.toggle("fa-play", isPaused);
-  elements.play.classList.toggle("fa-pause", !isPaused);
-  elements.playButton.classList.toggle("orange", !isPaused);
+
+  if (isPaused) {
+    elements.play.classList.replace("fa-pause", "fa-play");
+    elements.playButton.classList.remove("orange");
+  } else {
+    elements.play.classList.replace("fa-play", "fa-pause");
+    elements.playButton.classList.add("orange");
+  }
+};
+
+const changeSongtitle = (cancion) => {
+  const nombreArchivo = cancion.substring(cancion.lastIndexOf("/") + 1);
+  elements.titulo.innerText = nombreArchivo;
 };
 
 const updateProgress = () => {
   const { duration, currentTime } = elements.audioPlayer;
+  const percent = (currentTime / duration) * 100;
+  const formattedCurrentTime = formatTime(currentTime);
+  const formattedDuration = formatTime(duration);
 
-  // Verificar si duration y currentTime son números finitos
-  if (
-    Number.isFinite(duration) &&
-    Number.isFinite(currentTime) &&
-    duration !== 0
-  ) {
-    const percent = (currentTime / duration) * 100;
-    elements.range.value = percent;
-    elements.range.style.setProperty("--progress", `${percent}%`);
-    document.querySelector(".start").textContent = formatTime(currentTime);
-    document.querySelector(".end").textContent = formatTime(duration);
-  }
+  elements.range.value = percent;
+  elements.range.style.setProperty("--progress", percent);
+  document.querySelector(".start").textContent = formattedCurrentTime;
+  document.querySelector(".end").textContent = formattedDuration;
 };
 
 const setProgress = (event) => {
-  const { offsetWidth: totalWidth } = range;
-  const { offsetX: progressWidth } = event;
-  const current = (progressWidth / totalWidth) * audioPlayer.duration;
+  const totalWidth = elements.range.offsetWidth;
+  const progressWidth = event.offsetX;
+  const current = (progressWidth / totalWidth) * elements.audioPlayer.duration;
   elements.audioPlayer.currentTime = current;
 };
 
-const playSong = () => {
-  if (actualSong !== null || elements.audioPlayer.currentTime > 0) {
-    elements.audioPlayer.play();
-    updateControls();
-    if (!isRotating) {
-      rotateImage();
-      isRotating = true;
-    }
+const playSong = (cancion) => {
+  if (!cancion) {
+    return;
+  }
+
+  // Establecer el tiempo de reproducción si se ha almacenado previamente
+  if (settings.pausedTime > 0) {
+    elements.audioPlayer.currentTime = settings.pausedTime;
+    settings.pausedTime = 0;
+  }
+
+  elements.audioPlayer.play();
+  updateControls();
+
+  if (!settings.isRotating) {
+    rotateImage();
+    settings.isRotating = true;
   }
 };
 
@@ -199,104 +237,32 @@ const pauseSong = () => {
   elements.audioPlayer.pause();
   updateControls();
   stopRotation();
-  isRotating = false;
-};
+  settings.isRotating = false;
 
-const shuffleArray = (array) => {
-  for (let i = array.length - 1; i > 0; i--) {
-    const j = (Math.random() * (i + 1)) | 0;
-    [array[i], array[j]] = [array[j], array[i]];
-  }
-  return array;
-};
-
-let adIndices = shuffleArray([...Array(anuncios.length).keys()]);
-
-const playAd = () => {
-  if (adIndices.length === 0) {
-    adIndices = shuffleArray([...Array(anuncios.length).keys()]);
-  }
-
-  const nextAdIndex = adIndices.shift(); // Obtén y elimina el próximo índice de anuncio
-
-  elements.audioAds.src = "/audios/" + anuncios[nextAdIndex];
-
-  elements.audioAds.onloadedmetadata = () => {
-    pauseSong();
-    elements.audioAds.play();
-
-    setTimeout(() => {
-      nextSong();
-      hasPlayedAd = false;
-      changeSongtitle(actualSong, null);
-    }, elements.audioAds.duration * 1000);
-
-    changeSongtitle(actualSong, nextAdIndex);
-  };
-};
-
-const changeSongtitle = (songIndex, adIndex) => {
-  const text =
-    typeof adIndex !== "undefined" && adIndex !== null
-      ? anuncios[adIndex]
-      : canciones[songIndex];
-  elements.titulo.textContent = text;
+  settings.pausedTime = elements.audioPlayer.currentTime;
+  isPausedByUser = true;
 };
 
 const nextSong = () => {
-  const randomIndex = getRandomSongIndex();
-  loadSong(randomIndex);
+  settings.isPlaying = false;
+  socket.emit("play");
 };
 
-const togglePlay = () => {
-  if (elements.audioPlayer.paused) {
-    if (primeraVez) {
-      const randomIndex = Math.floor(Math.random() * canciones.length);
-      loadSong(randomIndex);
-      primeraVez = false;
-    } else {
-      playSong();
-    }
-    socket.on("resumeStream");
-  } else {
-    pauseSong();
-    socket.emit("pauseMusic");
-  }
-};
-
-const handleSongEnd = () => {
-  if (isMicrophoneActive) {
-    console.log("Micrófono activo. No se pueden reproducir anuncios.");
-    nextSong();
-    return;
-  }
-
-  if (elements.audioPlayer.currentTime >= adDuration && !hasPlayedAd) {
-    playAd(adIndex);
-    hasPlayedAd = true;
-  } else {
-    nextSong();
-  }
-};
-
-const backSong = () => {
-  if (elements.audioPlayer.currentTime <= 5 && actualSong > 0) {
-    loadSong(actualSong - 1);
-  } else {
-    elements.audioPlayer.currentTime = 0;
-  }
-};
 const formatTime = (time) => {
   const minutes = Math.floor(time / 60);
   const seconds = Math.floor(time % 60);
-  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(
-    2,
-    "0"
-  )}`;
+  return `${padTime(minutes)}:${padTime(seconds)}`;
 };
 
-const padTime = (time) => {
-  return typeof time !== "number" ? time : time < 10 ? "0" + time : time;
+const padTime = (time) => (time < 10 ? `0${time}` : time);
+
+// Debounce function that takes in another function and a delay time delay.
+const debounce = (func, delay) => {
+  let timeoutId;
+  return (...args) => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => func(...args), delay);
+  };
 };
 
 init();
