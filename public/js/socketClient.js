@@ -27,6 +27,7 @@ let settings = {
 const socket = io();
 
 let isPausedByUser = false;
+let song = null;
 
 const init = () => {
   elements.range.disabled = true;
@@ -122,36 +123,30 @@ const startMicrophone = async () => {
 const handlePlayButtonClick = () => {
   if (elements.audioPlayer.paused) {
     if (settings.isPlaying) {
-      playSong();
-      console.log("Ingresando cuando isPlayig in handlePlayButtonClick");
+      console.log("Reproduciendo");
+      playSong(song);
     } else {
-      if (isPausedByUser) {
-        elements.audioPlayer.currentTime = settings.pausedTime;
-        isPausedByUser = false;
-        console.log("IspausedByUser in handlePlayButtonClick");
-      } else {
-        socket.emit("play");
-        console.log(
-          "Ingresando cuando play del socket in handlePlayButtonClick"
-        );
-      }
+      console.log("Reproduciendo la primera vez");
+      socket.emit("play");
       settings.isPlaying = true;
     }
   } else {
+    console.log("Parando");
     pauseSong();
     socket.emit("pause");
-    console.log("Ingresando cuando pause del socket in handlePlayButtonClick");
   }
 };
 
 const handleSocketPlay = (cancion) => {
   console.log("Reproduciendo cancion:", cancion);
+  song = cancion;
   elements.audioPlayer.src = cancion;
   playSong(cancion);
   changeSongtitle(cancion);
 };
 
 const handleAudioEnded = () => {
+  console.log(settings.accumulatedDuration);
   if (settings.accumulatedDuration >= settings.adDuration) {
     socket.emit("ads");
     settings.accumulatedDuration = 0;
@@ -219,7 +214,7 @@ const playSong = (cancion) => {
   }
 
   // Establecer el tiempo de reproducción si se ha almacenado previamente
-  if (settings.pausedTime > 0) {
+  if (settings.isPlaying) {
     elements.audioPlayer.currentTime = settings.pausedTime;
     settings.pausedTime = 0;
   }
@@ -244,7 +239,6 @@ const pauseSong = () => {
 };
 
 const nextSong = () => {
-  settings.isPlaying = false;
   socket.emit("play");
 };
 
