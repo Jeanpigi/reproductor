@@ -29,7 +29,8 @@ let settings = {
 const socket = io();
 
 let isPausedByUser = false;
-// let song = null;
+let audioContext = null;
+let microphoneNode = null;
 
 const init = () => {
   elements.range.disabled = true;
@@ -74,28 +75,28 @@ const bindEvents = () => {
 };
 
 const handleMicrophone = () => {
-  console.log("Microphone is clicked");
   settings.isMicrophoneActive = !settings.isMicrophoneActive; // Cambiar el estado del micrófono
 
-  startMicrophone();
-
-  // Restaurar el volumen de la música y detener el micrófono si ya no está activo
-  if (!settings.isMicrophoneActive) {
-    elements.audioPlayer.volume = settings.originalMusicVolume;
+  if (settings.isMicrophoneActive) {
+    startMicrophone();
+    console.log("Microphone is Activo");
+  } else {
+    stopMicrophone();
+    console.log("Microphone is Inactivo");
   }
 
   elements.recordButton.classList.toggle("orange", settings.isMicrophoneActive);
 };
-
 const startMicrophone = async () => {
   try {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    const audioContext = new AudioContext();
-    const microphoneNode = audioContext.createMediaStreamSource(stream);
+
+    audioContext = new AudioContext();
+    microphoneNode = audioContext.createMediaStreamSource(stream);
 
     // Crear nodo para controlar el volumen del micrófono
     const gainNode = audioContext.createGain();
-    gainNode.gain.value = settings.isMicrophoneActive ? 2.0 : 0.5;
+    gainNode.gain.value = 5.0; // Establecer el volumen del micrófono en alto
 
     // Conectar el nodo del micrófono al nodo de ganancia
     microphoneNode.connect(gainNode);
@@ -103,15 +104,9 @@ const startMicrophone = async () => {
     // Conectar el nodo de ganancia al nodo de salida (altavoces)
     gainNode.connect(audioContext.destination);
 
-    // Cambiar el volumen de la música según el estado del micrófono
-    elements.audioPlayer.volume = settings.isMicrophoneActive
-      ? 0.5
-      : settings.originalMusicVolume;
-
-    // Actualizar el volumen original de la música si se activa/desactiva el micrófono
-    if (!settings.isMicrophoneActive) {
-      settings.originalMusicVolume = elements.audioPlayer.volume;
-    }
+    // Cambiar el volumen de la música cuando el micrófono está activo
+    settings.originalMusicVolume = elements.audioPlayer.volume; // Guardar el volumen original
+    elements.audioPlayer.volume = 0.5;
   } catch (error) {
     if (error.name === "NotAllowedError") {
       console.log("El usuario ha denegado el acceso al micrófono.");
@@ -121,18 +116,28 @@ const startMicrophone = async () => {
   }
 };
 
+const stopMicrophone = () => {
+  if (microphoneNode) {
+    microphoneNode.disconnect();
+  }
+
+  if (audioContext && audioContext.state !== "closed") {
+    audioContext.close();
+  }
+
+  // Restaurar el volumen de la música
+  elements.audioPlayer.volume = settings.originalMusicVolume;
+};
+
 const handlePlayButtonClick = () => {
   if (elements.audioPlayer.paused) {
     if (settings.isPlaying) {
-      console.log("Reproduciendo");
       playSong(settings.song);
     } else {
-      console.log("Reproduciendo la primera vez");
       socket.emit("play");
       settings.isPlaying = true;
     }
   } else {
-    console.log("Parando");
     pauseSong();
     socket.emit("pause");
   }
@@ -150,7 +155,6 @@ const handleAudioEnded = () => {
   console.log(
     `Esta es la acumulación de la duración ${settings.accumulatedDuration}`
   );
-  console.log(`Este es el anuncio almacenado ${settings.anuncio}`);
   if (settings.accumulatedDuration >= settings.adDuration) {
     socket.emit("ads");
     settings.accumulatedDuration = 0;

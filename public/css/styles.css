@@ -566,4 +566,9 @@ p {
   .player {
     width: 280px;
   }
+
+  .player__btn--medium {
+    min-height: 58px;
+    min-width: 62px;
+  }
 }
