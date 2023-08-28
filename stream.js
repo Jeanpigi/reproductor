@@ -15,21 +15,32 @@ const socket = io(SERVER_URL);
 const PORT = 3006;
 
 const musicFolder = path.join(__dirname, "public", "music");
+const anunciosFolder = path.join(__dirname, "public", "audios");
 
-let currentSong = null;
+let currentSong = "";
+let currentAd = "";
 
 app.use(express.static("public"));
 app.use(compression());
 
 app.get("/stream", (req, res) => {
+  let filePath;
   if (!currentSong) {
     res.status(500).send("No hay canción para reproducir.");
     return;
   }
 
-  const currentFilePath = path.join(musicFolder, currentSong);
+  if (currentAd) {
+    filePath = path.join(anunciosFolder, currentAd);
+    currentAd = "";
+  } else if (currentSong) {
+    filePath = path.join(musicFolder, currentSong);
+  } else {
+    res.status(500).send("No hay canción ni anuncio para reproducir.");
+    return;
+  }
 
-  ffmpeg.ffprobe(currentFilePath, (err, metadata) => {
+  ffmpeg.ffprobe(filePath, (err, metadata) => {
     if (err) {
       console.error("Error al obtener la información del archivo:", err);
       return;
@@ -42,7 +53,7 @@ app.get("/stream", (req, res) => {
     const minutes = Math.floor(durationInSeconds / 60);
     const seconds = Math.floor(durationInSeconds % 60);
 
-    const fileName = path.basename(currentFilePath); // Extrae el nombre del archivo de la ruta completa
+    const fileName = path.basename(filePath); // Extrae el nombre del archivo de la ruta completa
 
     console.log("----------------------------------------------");
     console.log(`Archivo: ${fileName}`);
@@ -53,7 +64,7 @@ app.get("/stream", (req, res) => {
     console.log(`Tasa de bits: ${bitRate} bps`);
     console.log("----------------------------------------------");
 
-    const audioStream = fs.createReadStream(currentFilePath);
+    const audioStream = fs.createReadStream(filePath);
 
     res.setHeader("Content-Type", "audio/mpeg");
     res.set("transfer-encoding", "chunked");
@@ -62,8 +73,13 @@ app.get("/stream", (req, res) => {
 });
 
 socket.on("play", (cancion) => {
-  const nombreArchivo = cancion.split("/").pop(); // Obtiene el último segmento de la ruta
+  const nombreArchivo = cancion.split("/").pop();
   currentSong = nombreArchivo;
+});
+
+socket.on("playAd", (anuncio) => {
+  const nombreAnuncio = anuncio.split("/").pop();
+  currentAd = nombreAnuncio;
 });
 
 http.listen(PORT, () => {

@@ -22,12 +22,14 @@ let settings = {
   accumulatedDuration: 0,
   originalMusicVolume: 1,
   isMicrophoneActive: false,
+  song: "",
+  anuncio: "",
 };
 
 const socket = io();
 
 let isPausedByUser = false;
-let song = null;
+// let song = null;
 
 const init = () => {
   elements.range.disabled = true;
@@ -60,7 +62,6 @@ const bindEvents = () => {
     if (!settings.isDragging) setProgress(event);
   });
   elements.audioPlayer.addEventListener("loadedmetadata", function () {
-    console.log("La duración del audio es: ", elements.audioPlayer.duration);
     settings.accumulatedDuration += parseFloat(elements.audioPlayer.duration);
     updateProgress();
   });
@@ -124,7 +125,7 @@ const handlePlayButtonClick = () => {
   if (elements.audioPlayer.paused) {
     if (settings.isPlaying) {
       console.log("Reproduciendo");
-      playSong(song);
+      playSong(settings.song);
     } else {
       console.log("Reproduciendo la primera vez");
       socket.emit("play");
@@ -139,24 +140,29 @@ const handlePlayButtonClick = () => {
 
 const handleSocketPlay = (cancion) => {
   console.log("Reproduciendo cancion:", cancion);
-  song = cancion;
+  settings.song = cancion;
   elements.audioPlayer.src = cancion;
   playSong(cancion);
   changeSongtitle(cancion);
 };
 
 const handleAudioEnded = () => {
-  console.log(settings.accumulatedDuration);
+  console.log(
+    `Esta es la acumulación de la duración ${settings.accumulatedDuration}`
+  );
+  console.log(`Este es el anuncio almacenado ${settings.anuncio}`);
   if (settings.accumulatedDuration >= settings.adDuration) {
     socket.emit("ads");
     settings.accumulatedDuration = 0;
   } else {
     nextSong();
+    settings.anuncio = "";
   }
 };
 
 const handleSocketPlayAd = (ad) => {
   console.log("Reproduciendo anuncio:", ad);
+  settings.anuncio = ad;
   elements.audioPlayer.src = ad;
   playSong(ad);
 };
