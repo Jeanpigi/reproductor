@@ -1,7 +1,6 @@
-Contact: mailto:security@example-radio.com
+Contact: mailto:stick-master666@hotmail.com
 Encryption: https://example-radio.com/pgp-key
 Disclosure: https://example-radio.com/disclosure-policy
 
 # Información Adicional
 Preferred-Languages: en, es
-Hiring: https://example-radio.com/careers

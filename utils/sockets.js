@@ -52,10 +52,9 @@ module.exports = (server, baseDir) => {
       }
     };
 
-    // selecciona una canción aleatoriamente del array que se pase
     const obtenerAudioAleatoria = (array) => {
       const randomIndex = Math.floor(Math.random() * array.length);
-      return array[randomIndex]; // Devuelve un elemento aleatorio del arreglo
+      return array[randomIndex];
     };
 
     socket.on("play", () => {
@@ -84,6 +83,10 @@ module.exports = (server, baseDir) => {
         .catch((error) => {
           console.error("Error al obtener el anuncio", error);
         });
+    });
+
+    socket.on("microphoneData", (data) => {
+      socket.broadcast.emit("microphoneData", data);
     });
 
     socket.on("disconnect", () => {

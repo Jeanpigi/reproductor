@@ -18,19 +18,18 @@ let settings = {
   animationId: null,
   isDragging: false,
   isPlaying: false,
-  adDuration: 300, // Duración del anuncio en segundos (5 minutos)
+  adDuration: 600, // Duración del anuncio en segundos (10 minutos)
   accumulatedDuration: 0,
   originalMusicVolume: 1,
   isMicrophoneActive: false,
   song: "",
   anuncio: "",
+  isPausedByUser: false,
+  audioContext: null,
+  microphoneNode: null,
 };
 
 const socket = io();
-
-let isPausedByUser = false;
-let audioContext = null;
-let microphoneNode = null;
 
 const init = () => {
   elements.range.disabled = true;
@@ -49,6 +48,22 @@ const bindEvents = () => {
 
   socket.on("play", handleSocketPlay);
   socket.on("playAd", handleSocketPlayAd);
+  socket.on("microphoneData", (data) => {
+    if (settings.isMicrophoneActive) {
+      const audioBuffer = settings.audioContext.createBuffer(
+        1,
+        data.length,
+        settings.audioContext.sampleRate
+      );
+      const channelData = audioBuffer.getChannelData(0);
+      channelData.set(data);
+
+      const source = settings.audioContext.createBufferSource();
+      source.buffer = audioBuffer;
+      source.connect(settings.audioContext.destination);
+      source.start();
+    }
+  });
 
   elements.playButton.addEventListener("click", handlePlayButtonClick);
   elements.forwardButton.addEventListener("click", nextSong);
@@ -91,22 +106,36 @@ const startMicrophone = async () => {
   try {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-    audioContext = new AudioContext();
-    microphoneNode = audioContext.createMediaStreamSource(stream);
+    settings.audioContext = new AudioContext();
+    settings.microphoneNode =
+      settings.audioContext.createMediaStreamSource(stream);
 
     // Crear nodo para controlar el volumen del micrófono
-    const gainNode = audioContext.createGain();
-    gainNode.gain.value = 5.0; // Establecer el volumen del micrófono en alto
+    const microphoneGainNode = settings.audioContext.createGain();
+    microphoneGainNode.gain.value = 1.0; // Volumen normal del micrófono
 
-    // Conectar el nodo del micrófono al nodo de ganancia
-    microphoneNode.connect(gainNode);
+    // Crear nodo de script para procesar los datos del micrófono
+    const bufferSize = 4096;
+    const scriptNode = settings.audioContext.createScriptProcessor(
+      bufferSize,
+      1,
+      1
+    );
 
-    // Conectar el nodo de ganancia al nodo de salida (altavoces)
-    gainNode.connect(audioContext.destination);
+    scriptNode.onaudioprocess = (event) => {
+      const inputBuffer = event.inputBuffer;
+      const inputData = inputBuffer.getChannelData(0); // Canal de audio mono
 
-    // Cambiar el volumen de la música cuando el micrófono está activo
-    settings.originalMusicVolume = elements.audioPlayer.volume; // Guardar el volumen original
-    elements.audioPlayer.volume = 0.5;
+      // Enviar los datos del micrófono al servidor a través del socket
+      if (settings.isMicrophoneActive) {
+        socket.emit("microphoneData", inputData);
+      }
+    };
+
+    // Conectar el nodo de captura al nodo de ganancia del micrófono
+    settings.microphoneNode.connect(microphoneGainNode);
+    microphoneGainNode.connect(scriptNode);
+    scriptNode.connect(settings.audioContext.destination);
   } catch (error) {
     if (error.name === "NotAllowedError") {
       console.log("El usuario ha denegado el acceso al micrófono.");
@@ -117,12 +146,12 @@ const startMicrophone = async () => {
 };
 
 const stopMicrophone = () => {
-  if (microphoneNode) {
-    microphoneNode.disconnect();
+  if (settings.microphoneNode) {
+    settings.microphoneNode.disconnect();
   }
 
-  if (audioContext && audioContext.state !== "closed") {
-    audioContext.close();
+  if (settings.audioContext && settings.audioContext.state !== "closed") {
+    settings.audioContext.close();
   }
 
   // Restaurar el volumen de la música
@@ -245,7 +274,7 @@ const pauseSong = () => {
   settings.isRotating = false;
 
   settings.pausedTime = elements.audioPlayer.currentTime;
-  isPausedByUser = true;
+  settings.isPausedByUser = true;
 };
 
 const nextSong = () => {
