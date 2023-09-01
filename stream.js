@@ -8,7 +8,7 @@ const ffmpeg = require("fluent-ffmpeg");
 
 const io = require("socket.io-client");
 
-const SERVER_URL = "http://localhost:3005"; // Cambia esto a la URL de tu primer servidor
+const SERVER_URL = "http://localhost:3005";
 
 const socket = io(SERVER_URL);
 
@@ -80,6 +80,11 @@ socket.on("play", (cancion) => {
 socket.on("playAd", (anuncio) => {
   const nombreAnuncio = anuncio.split("/").pop();
   currentAd = nombreAnuncio;
+});
+
+socket.on("disconnect", () => {
+  console.log("Se ha perdido la conexión con el servidor");
+  socket.connect();
 });
 
 http.listen(PORT, () => {

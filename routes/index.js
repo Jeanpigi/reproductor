@@ -48,6 +48,10 @@ router.post(
   controlInactividad
 );
 
+router.get("/stream", (req, res) => {
+  res.render("stream");
+});
+
 router.post("/canciones/:id", verificarSesion, deleteSong, controlInactividad);
 
 // Rutas del panel de anuncios

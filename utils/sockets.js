@@ -11,6 +11,11 @@ module.exports = (server, baseDir) => {
   // Almacenar las conexiones de clientes
   const clients = {};
 
+  const recentlyPlayedSongs = [];
+  const recentlyPlayedAds = [];
+
+  const MAX_RECENT_ITEMS = 60;
+
   io.on("connection", (socket) => {
     console.log("Cliente conectado");
 
@@ -54,13 +59,37 @@ module.exports = (server, baseDir) => {
 
     const obtenerAudioAleatoria = (array) => {
       const randomIndex = Math.floor(Math.random() * array.length);
-      return array[randomIndex];
+      return array[randomIndex]; // Devuelve un elemento aleatorio del arreglo
+    };
+
+    const obtenerAudioAleatoriaSinRepetir = (array, recentlyPlayed) => {
+      const availableOptions = array.filter(
+        (item) => !recentlyPlayed.includes(item)
+      );
+
+      if (availableOptions.length === 0) {
+        // Si ya se han reproducido todas las opciones, reiniciar el registro
+        recentlyPlayed.length = 0;
+        return obtenerAudioAleatoriaSinRepetir(array, recentlyPlayed);
+      }
+
+      const randomItem = obtenerAudioAleatoria(availableOptions);
+      recentlyPlayed.push(randomItem);
+
+      if (recentlyPlayed.length > MAX_RECENT_ITEMS) {
+        recentlyPlayed.shift(); // Elimina el elemento más antiguo si excede el límite
+      }
+
+      return randomItem;
     };
 
     socket.on("play", () => {
       getSongs()
         .then((songs) => {
-          const randomSong = obtenerAudioAleatoria(songs);
+          const randomSong = obtenerAudioAleatoriaSinRepetir(
+            songs,
+            recentlyPlayedSongs
+          );
 
           io.emit("play", randomSong);
         })
@@ -69,20 +98,23 @@ module.exports = (server, baseDir) => {
         });
     });
 
-    socket.on("pause", () => {
-      io.emit("pause");
-    });
-
     socket.on("ads", () => {
       getAds()
         .then((ads) => {
-          const randomAds = obtenerAudioAleatoria(ads);
+          const randomAd = obtenerAudioAleatoriaSinRepetir(
+            ads,
+            recentlyPlayedAds
+          );
 
-          io.emit("playAd", randomAds);
+          io.emit("playAd", randomAd);
         })
         .catch((error) => {
           console.error("Error al obtener el anuncio", error);
         });
+    });
+
+    socket.on("pause", () => {
+      io.emit("pause");
     });
 
     socket.on("microphoneData", (data) => {
