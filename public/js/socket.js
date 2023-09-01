@@ -17,7 +17,7 @@ const settings = {
   accumulatedDuration: 0,
 };
 
-const SERVER_URL = "http://localhost:3005";
+const SERVER_URL = "http://localhost:3007";
 const socket = io(SERVER_URL);
 
 const init = () => {
@@ -25,47 +25,59 @@ const init = () => {
 };
 
 const bindEvents = () => {
-  socket.on("connect", () => {
-    console.log("Conectado al servidor");
-  });
-
-  socket.on("disconnect", () => {
-    console.log("Se ha perdido la conexión con el servidor");
-    socket.connect();
-  });
-
+  socket.on("connect", handleConnect);
+  socket.on("disconnect", handleDisconnect);
   socket.on("play", playSong);
-
   socket.on("pause", pauseAudio);
-
-  socket.on("playAd", (ad) => {
-    console.log(ad);
-    settings.anuncio = ad;
-  });
+  socket.on("playAd", handlePlayAd);
 
   elements.range.addEventListener("input", updateProgress);
-  elements.range.addEventListener("mousedown", () => {
-    settings.isDragging = true;
-  });
-  elements.range.addEventListener("mouseup", () => {
-    settings.isDragging = false;
-  });
-  elements.range.addEventListener("click", (event) => {
-    if (!settings.isDragging) setProgress(event);
-  });
+  elements.range.addEventListener("mousedown", handleMouseDown);
+  elements.range.addEventListener("mouseup", handleMouseUp);
+  elements.range.addEventListener("click", handleClick);
 
-  elements.audioPlayer.addEventListener("loadedmetadata", () => {
-    settings.accumulatedDuration += parseFloat(elements.audioPlayer.duration);
-    updateProgress();
-  });
-
-  elements.audioPlayer.addEventListener("timeupdate", () => {
-    if (!settings.isDragging) {
-      requestAnimationFrame(updateProgress);
-    }
-  });
-
+  elements.audioPlayer.addEventListener("loadedmetadata", handleLoadedMetadata);
+  elements.audioPlayer.addEventListener("timeupdate", handleTimeUpdate);
   elements.audioPlayer.addEventListener("ended", handleSongEnd);
+};
+
+const handleConnect = () => {
+  console.log("Conectado al servidor");
+};
+
+const handleDisconnect = () => {
+  console.log("Se ha perdido la conexión con el servidor");
+  socket.connect();
+};
+
+const handlePlayAd = (ad) => {
+  console.log(ad);
+  settings.anuncio = ad;
+};
+
+const handleMouseDown = () => {
+  settings.isDragging = true;
+};
+
+const handleMouseUp = () => {
+  settings.isDragging = false;
+};
+
+const handleClick = (event) => {
+  if (!settings.isDragging) {
+    setProgress(event);
+  }
+};
+
+const handleLoadedMetadata = () => {
+  settings.accumulatedDuration += parseFloat(elements.audioPlayer.duration);
+  updateProgress();
+};
+
+const handleTimeUpdate = () => {
+  if (!settings.isDragging) {
+    requestAnimationFrame(updateProgress);
+  }
 };
 
 const playSong = (cancion) => {

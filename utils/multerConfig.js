@@ -2,50 +2,45 @@ const multer = require("multer");
 
 // Función de almacenamiento para archivos de música
 const musicStorage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "public/music");
-  },
-  filename: function (req, file, cb) {
+  destination: (req, file, cb) => cb(null, "public/music"),
+  filename: (req, file, cb) => {
     // Guardar nombre de archivo
     cb(null, `${file.originalname}`);
   },
 });
 
-// Función de almacenamiento para archivos de anuncios
 const adsStorage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "public/audios");
-  },
+  destination: (req, file, cb) => cb(null, "public/audios"),
   filename: function (req, file, cb) {
     // Guardar el nombre de archivo
     cb(null, `${file.originalname}`);
   },
 });
 
-// Configuración de Multer para archivos de música
 const musicUpload = multer({
   storage: musicStorage,
   fileFilter: function (req, file, cb) {
-    // Restringir los tipos de archivo permitidos
+    const allowedExtensions = ["mp3", "m4a"];
     const fileExtension = file.originalname.split(".").pop();
-    if (fileExtension === "mp3" || fileExtension === "m4a") {
+    if (allowedExtensions.includes(fileExtension)) {
       cb(null, true);
     } else {
       cb(new Error("Solo se permiten archivos MP3 y M4A."), false);
     }
   },
-}).array("canciones", 50); // Permitir hasta 50 archivos de música
+}).array("canciones", 50);
 
-// Configuración de Multer para archivos de anuncios
 const adsUpload = multer({
   storage: adsStorage,
   fileFilter: function (req, file, cb) {
-    // Restringir los tipos de archivo permitidos
+    // Restrict the allowed file types
     const fileExtension = file.originalname.split(".").pop();
-    if (fileExtension === "mp3") {
+    const allowedExtensions = ["mp3"];
+
+    if (allowedExtensions.includes(fileExtension)) {
       cb(null, true);
     } else {
-      cb(new Error("Solo se permiten archivos MP3"), false);
+      cb(new Error("Only MP3 files are allowed"), false);
     }
   },
 }).array("audios", 50); // Permitir hasta 50 archivos de anuncios

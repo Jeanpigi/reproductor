@@ -6,7 +6,6 @@ const exphbs = require("express-handlebars");
 const compression = require("express-compression");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
-const session = require("express-session");
 const http = require("http");
 
 // Rutas
@@ -14,29 +13,15 @@ const index = require("./routes/index");
 
 const app = express();
 const server = http.createServer(app);
-const port = process.env.PORT || 3005;
+const port = process.env.PORT || 3007;
 
 app.use(morgan("tiny"));
 app.use(express.json());
 app.use(cors());
 app.use(compression());
 
-// Configurar express-session
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET,
-    resave: false,
-    saveUninitialized: true,
-    cookie: {
-      maxAge: 600000,
-      sameSite: "None",
-      secure: true,
-    },
-  })
-);
-
 // Configurar cookie-parser con la misma clave secreta
-app.use(cookieParser(process.env.SESSION_SECRET));
+app.use(cookieParser());
 
 // Configuración de Handlebars como motor de plantillas
 app.set("views", path.join(__dirname, "views"));

@@ -14,6 +14,7 @@ const {
 } = require("../database/db");
 
 const fs = require("fs");
+const jwt = require("jsonwebtoken");
 
 // Signup
 exports.signup = async (req, res) => {
@@ -28,10 +29,6 @@ exports.signup = async (req, res) => {
 
     // Crea un nuevo usuario
     await createUser(username, password);
-
-    // Guardar el usuario en la sesión
-    req.session.user = { username };
-
     res.redirect("/login");
   } catch (error) {
     console.log(`Error que se está presentando es ${error}`);
@@ -42,26 +39,33 @@ exports.signup = async (req, res) => {
 // Consulta de datos de usuario
 exports.login = async (req, res) => {
   const { username, password } = req.body;
+
   try {
-    // Obtener el usuario por nombre de usuario
     const user = await getUserByUsername(username);
+
     if (!user) {
       console.log("El nombre de usuario es incorrecto");
       return res.redirect("/login");
     }
 
-    // Comparar las contraseñas
     const isPasswordCorrect = await comparePasswords(
       password,
       user[0].password
     );
+
     if (!isPasswordCorrect) {
       console.log("La contraseña es incorrecto");
       return res.redirect("/login");
     }
 
-    // Guardar el usuario en la sesión
-    req.session.user = { username };
+    // req.session.user = { username };
+
+    // Firmar el token con un objeto en lugar de una cadena
+    const token = jwt.sign({ username: username }, process.env.JWT_SECRET, {
+      expiresIn: "1h",
+    });
+
+    res.cookie("token", token);
 
     res.redirect("/canciones");
   } catch (error) {

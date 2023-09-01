@@ -46,25 +46,12 @@ const bindEvents = () => {
     socket.connect();
   });
 
-  socket.on("play", handleSocketPlay);
-  socket.on("playAd", handleSocketPlayAd);
-  socket.on("microphoneData", (data) => {
-    if (settings.isMicrophoneActive) {
-      const audioBuffer = settings.audioContext.createBuffer(
-        1,
-        data.length,
-        settings.audioContext.sampleRate
-      );
-      const channelData = audioBuffer.getChannelData(0);
-      channelData.set(data);
-
-      const source = settings.audioContext.createBufferSource();
-      source.buffer = audioBuffer;
-      source.connect(settings.audioContext.destination);
-      source.start();
-    }
+  socket.on("tags", (tags) => {
+    console.log(tags);
   });
 
+  socket.on("play", handleSocketPlay);
+  socket.on("playAd", handleSocketPlayAd);
   elements.playButton.addEventListener("click", handlePlayButtonClick);
   elements.forwardButton.addEventListener("click", nextSong);
   elements.range.addEventListener("input", updateProgress);
@@ -86,76 +73,6 @@ const bindEvents = () => {
     debounce(updateProgress, 100)
   );
   elements.audioPlayer.addEventListener("ended", handleAudioEnded);
-  elements.recordButton.addEventListener("click", handleMicrophone);
-};
-
-const handleMicrophone = () => {
-  settings.isMicrophoneActive = !settings.isMicrophoneActive; // Cambiar el estado del micrófono
-
-  if (settings.isMicrophoneActive) {
-    startMicrophone();
-    console.log("Microphone is Activo");
-  } else {
-    stopMicrophone();
-    console.log("Microphone is Inactivo");
-  }
-
-  elements.recordButton.classList.toggle("orange", settings.isMicrophoneActive);
-};
-const startMicrophone = async () => {
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-
-    settings.audioContext = new AudioContext();
-    settings.microphoneNode =
-      settings.audioContext.createMediaStreamSource(stream);
-
-    // Crear nodo para controlar el volumen del micrófono
-    const microphoneGainNode = settings.audioContext.createGain();
-    microphoneGainNode.gain.value = 1.0; // Volumen normal del micrófono
-
-    // Crear nodo de script para procesar los datos del micrófono
-    const bufferSize = 4096;
-    const scriptNode = settings.audioContext.createScriptProcessor(
-      bufferSize,
-      1,
-      1
-    );
-
-    scriptNode.onaudioprocess = (event) => {
-      const inputBuffer = event.inputBuffer;
-      const inputData = inputBuffer.getChannelData(0); // Canal de audio mono
-
-      // Enviar los datos del micrófono al servidor a través del socket
-      if (settings.isMicrophoneActive) {
-        socket.emit("microphoneData", inputData);
-      }
-    };
-
-    // Conectar el nodo de captura al nodo de ganancia del micrófono
-    settings.microphoneNode.connect(microphoneGainNode);
-    microphoneGainNode.connect(scriptNode);
-    scriptNode.connect(settings.audioContext.destination);
-  } catch (error) {
-    if (error.name === "NotAllowedError") {
-      console.log("El usuario ha denegado el acceso al micrófono.");
-    } else {
-      console.error("Error al acceder al micrófono:", error);
-    }
-  }
-};
-
-const stopMicrophone = () => {
-  if (settings.microphoneNode) {
-    settings.microphoneNode.disconnect();
-  }
-
-  if (settings.audioContext && settings.audioContext.state !== "closed") {
-    settings.audioContext.close();
-  }
-
-  // Restaurar el volumen de la música
-  elements.audioPlayer.volume = settings.originalMusicVolume;
 };
 
 const handlePlayButtonClick = () => {
@@ -172,8 +89,9 @@ const handlePlayButtonClick = () => {
   }
 };
 
-const handleSocketPlay = (cancion) => {
+const handleSocketPlay = (cancion, metadata) => {
   console.log("Reproduciendo cancion:", cancion);
+  console.log("La metadata: ", metadata);
   settings.song = cancion;
   elements.audioPlayer.src = cancion;
   playSong(cancion);
@@ -181,10 +99,8 @@ const handleSocketPlay = (cancion) => {
 };
 
 const handleAudioEnded = () => {
-  console.log(
-    `Esta es la acumulación de la duración ${settings.accumulatedDuration}`
-  );
   if (settings.accumulatedDuration >= settings.adDuration) {
+    settings.song = "";
     socket.emit("ads");
     settings.accumulatedDuration = 0;
   } else {
@@ -252,7 +168,6 @@ const playSong = (cancion) => {
     return;
   }
 
-  // Establecer el tiempo de reproducción si se ha almacenado previamente
   if (settings.isPlaying) {
     elements.audioPlayer.currentTime = settings.pausedTime;
     settings.pausedTime = 0;

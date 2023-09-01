@@ -1,7 +1,11 @@
-function confirmDelete(event) {
-    event.preventDefault(); // Evita el envío del formulario de inmediato
+const confirmDelete = (event) => {
+  event.preventDefault();
 
-    if (confirm('¿Estás seguro de que deseas eliminar este elemento?')) {
-        event.target.closest('form').submit(); // Envía el formulario para realizar la eliminación
-    }
-}
+  const shouldDelete = confirm(
+    "¿Estás seguro de que deseas eliminar este elemento?"
+  );
+  if (shouldDelete) {
+    const form = event.target.closest("form");
+    form.submit();
+  }
+};

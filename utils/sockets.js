@@ -8,7 +8,6 @@ module.exports = (server, baseDir) => {
     reconnectionDelay: 1000,
   });
 
-  // Almacenar las conexiones de clientes
   const clients = {};
 
   const recentlyPlayedSongs = [];
@@ -59,7 +58,7 @@ module.exports = (server, baseDir) => {
 
     const obtenerAudioAleatoria = (array) => {
       const randomIndex = Math.floor(Math.random() * array.length);
-      return array[randomIndex]; // Devuelve un elemento aleatorio del arreglo
+      return array[randomIndex];
     };
 
     const obtenerAudioAleatoriaSinRepetir = (array, recentlyPlayed) => {
@@ -77,7 +76,7 @@ module.exports = (server, baseDir) => {
       recentlyPlayed.push(randomItem);
 
       if (recentlyPlayed.length > MAX_RECENT_ITEMS) {
-        recentlyPlayed.shift(); // Elimina el elemento más antiguo si excede el límite
+        recentlyPlayed.shift();
       }
 
       return randomItem;
@@ -115,6 +114,10 @@ module.exports = (server, baseDir) => {
 
     socket.on("pause", () => {
       io.emit("pause");
+    });
+
+    socket.on("tags", (tags) => {
+      socket.broadcast.emit("tags", tags);
     });
 
     socket.on("microphoneData", (data) => {

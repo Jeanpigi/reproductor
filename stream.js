@@ -8,11 +8,11 @@ const ffmpeg = require("fluent-ffmpeg");
 
 const io = require("socket.io-client");
 
-const SERVER_URL = "http://localhost:3005";
+const SERVER_URL = "http://localhost:3007";
 
 const socket = io(SERVER_URL);
 
-const PORT = 3006;
+const PORT = 3008;
 
 const musicFolder = path.join(__dirname, "public", "music");
 const anunciosFolder = path.join(__dirname, "public", "audios");
@@ -73,11 +73,13 @@ app.get("/stream", (req, res) => {
 });
 
 socket.on("play", (cancion) => {
+  currentAd = "";
   const nombreArchivo = cancion.split("/").pop();
   currentSong = nombreArchivo;
 });
 
 socket.on("playAd", (anuncio) => {
+  currentSong = "";
   const nombreAnuncio = anuncio.split("/").pop();
   currentAd = nombreAnuncio;
 });

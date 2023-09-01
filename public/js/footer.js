@@ -1,8 +1,8 @@
-function actualizarFechaHora() {
-    const fechaHoraActual = new Date().toLocaleString();
-    const footerText = document.getElementById('footer-text');
-    footerText.textContent = fechaHoraActual;
-}
+const actualizarFechaHora = () => {
+  const footerText = document.getElementById("footer-text");
+  const fechaHoraActual = new Date().toLocaleString();
+  footerText.textContent = fechaHoraActual;
+};
 
 // Llamamos a la función para que se ejecute inmediatamente
 actualizarFechaHora();

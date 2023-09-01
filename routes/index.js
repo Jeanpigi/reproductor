@@ -71,8 +71,8 @@ router.get("/api/anuncios", anuncios);
 
 // Ruta para el cierre de sesión
 router.get("/logout", (req, res) => {
-  // Destruir la sesión y redirigir a la página de inicio de sesión
-  req.session.destroy();
+  // Elimina la cookie que almacena el token JWT
+  res.clearCookie("token");
   res.redirect("/login");
 });
 
