@@ -18,7 +18,7 @@ let settings = {
   animationId: null,
   isDragging: false,
   isPlaying: false,
-  adDuration: 600, // Duración del anuncio en segundos (10 minutos)
+  adDuration: 1200, // Duración del anuncio en segundos (10 minutos)
   accumulatedDuration: 0,
   originalMusicVolume: 1,
   isMicrophoneActive: false,
@@ -50,6 +50,7 @@ const bindEvents = () => {
   socket.on("playAd", handleSocketPlayAd);
   elements.playButton.addEventListener("click", handlePlayButtonClick);
   elements.forwardButton.addEventListener("click", nextSong);
+  elements.backwardButton.addEventListener("click", nextSong);
   elements.range.addEventListener("input", updateProgress);
   elements.range.addEventListener("mousedown", () => {
     settings.isDragging = true;

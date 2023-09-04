@@ -53,10 +53,6 @@ router.post(
   controlInactividad
 );
 
-router.get("/stream", (req, res) => {
-  res.render("stream");
-});
-
 // spotify route
 router.get("/spotify-login", spotifyLogin);
 router.get("/spotify-callback", spotifyCallback);
@@ -76,8 +72,8 @@ router.post(
 router.post("/audios/:id", verificarSesion, deleteAudios, controlInactividad);
 
 // APIs
-router.get("/api/canciones", canciones);
-router.get("/api/anuncios", anuncios);
+router.get("/api/canciones", verificarSesion, canciones);
+router.get("/api/anuncios", verificarSesion, anuncios);
 
 // Ruta para el cierre de sesión
 router.get("/logout", (req, res) => {
