@@ -120,10 +120,6 @@ module.exports = (server, baseDir) => {
       socket.broadcast.emit("tags", tags);
     });
 
-    socket.on("microphoneData", (data) => {
-      socket.broadcast.emit("microphoneData", data);
-    });
-
     socket.on("disconnect", () => {
       console.log("Cliente desconectado");
       delete clients[socket.id];

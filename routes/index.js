@@ -18,6 +18,11 @@ const { adsUpload, musicUpload } = require("../utils/multerConfig");
 // Middlewares
 const { controlInactividad } = require("../middleware/inactividad");
 const { verificarSesion } = require("../middleware/verificacion");
+const {
+  spotifyLogin,
+  spotifyCallback,
+  spotifyToken,
+} = require("../controllers/spotifyController");
 
 // Ruta principal
 router.get("/", (req, res) => {
@@ -51,6 +56,11 @@ router.post(
 router.get("/stream", (req, res) => {
   res.render("stream");
 });
+
+// spotify route
+router.get("/spotify-login", spotifyLogin);
+router.get("/spotify-callback", spotifyCallback);
+router.get("/spotify-token", spotifyToken);
 
 router.post("/canciones/:id", verificarSesion, deleteSong, controlInactividad);
 

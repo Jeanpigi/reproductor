@@ -37,17 +37,13 @@ const init = () => {
 };
 
 const bindEvents = () => {
-  socket.on("connect", () => {
-    console.log("Conectado al servidor");
+  socket.on("connection", () => {
+    console.log(`El cliente se ha conectado al servidor de radio`);
   });
 
   socket.on("disconnect", () => {
     console.log("Se ha perdido la conexión con el servidor");
     socket.connect();
-  });
-
-  socket.on("tags", (tags) => {
-    console.log(tags);
   });
 
   socket.on("play", handleSocketPlay);
@@ -89,9 +85,8 @@ const handlePlayButtonClick = () => {
   }
 };
 
-const handleSocketPlay = (cancion, metadata) => {
+const handleSocketPlay = (cancion) => {
   console.log("Reproduciendo cancion:", cancion);
-  console.log("La metadata: ", metadata);
   settings.song = cancion;
   elements.audioPlayer.src = cancion;
   playSong(cancion);

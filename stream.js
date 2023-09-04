@@ -8,11 +8,11 @@ const ffmpeg = require("fluent-ffmpeg");
 
 const io = require("socket.io-client");
 
-const SERVER_URL = "http://localhost:3007";
+const SERVER_URL = "http://localhost:3005";
 
 const socket = io(SERVER_URL);
 
-const PORT = 3008;
+const PORT = 3006;
 
 const musicFolder = path.join(__dirname, "public", "music");
 const anunciosFolder = path.join(__dirname, "public", "audios");
@@ -25,6 +25,7 @@ app.use(compression());
 
 app.get("/stream", (req, res) => {
   let filePath;
+  const clientIP = req.ip;
   if (!currentSong) {
     res.status(500).send("No hay canción para reproducir.");
     return;
@@ -56,6 +57,7 @@ app.get("/stream", (req, res) => {
     const fileName = path.basename(filePath); // Extrae el nombre del archivo de la ruta completa
 
     console.log("----------------------------------------------");
+    console.log(`Ip: ${clientIP}`);
     console.log(`Archivo: ${fileName}`);
     console.log(`Duración: ${minutes}:${seconds}`);
     console.log(`Duración en segundos: ${durationInSeconds}`);
@@ -72,22 +74,26 @@ app.get("/stream", (req, res) => {
   });
 });
 
-socket.on("play", (cancion) => {
-  currentAd = "";
+// Manejo de eventos Socket.IO
+const handlePlayEvent = (cancion) => {
   const nombreArchivo = cancion.split("/").pop();
   currentSong = nombreArchivo;
-});
+};
 
-socket.on("playAd", (anuncio) => {
+const handlePlayAdEvent = (anuncio) => {
   currentSong = "";
   const nombreAnuncio = anuncio.split("/").pop();
   currentAd = nombreAnuncio;
-});
+};
 
-socket.on("disconnect", () => {
+const handleDisconnectEvent = () => {
   console.log("Se ha perdido la conexión con el servidor");
   socket.connect();
-});
+};
+
+socket.on("play", handlePlayEvent);
+socket.on("playAd", handlePlayAdEvent);
+socket.on("disconnect", handleDisconnectEvent);
 
 http.listen(PORT, () => {
   console.log(`Servidor de streaming iniciado en el puerto ${PORT}`);
