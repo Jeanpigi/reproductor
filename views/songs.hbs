@@ -1,6 +1,6 @@
 <div class="content__player">
     <div class="container__content">
-        <h1>Canciones:</h1>
+        <h1>Canciones: {{canciones.length}}</h1>
         <div class="content__song">
             {{#each canciones}}
             <form action="/canciones/{{this.id}}" method="POST" class="delete-form">
@@ -13,7 +13,6 @@
             </form>
             {{/each}}
         </div>
-        <script defer src="/js/confirmDelete.js"></script>
     </div>
     <div class="container__index">
         <div class="container__list-player">
@@ -44,12 +43,11 @@
                         </button>
                     </form>
                 </div>
-                <script defer src="/js/loadFile.js"></script>
             </div>
         </div>
     </div>
     <div class="container__content">
-        <h1>Anuncios:</h1>
+        <h1>Anuncios: {{anuncios.length}}</h1>
         <div class="content__song">
             {{#each anuncios}}
             <form action="/audios/{{this.id}}" method="POST" class="delete-form">
@@ -62,6 +60,8 @@
             </form>
             {{/each}}
         </div>
-        <script defer src="/js/confirmDelete.js"></script>
     </div>
 </div>
+
+<script defer src="/js/loadFile.js"></script>
+<script defer src="/js/confirmDelete.js"></script>
