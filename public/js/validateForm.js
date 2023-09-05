@@ -3,7 +3,11 @@ const validateForm = () => {
   const password = document.getElementById("passwordInput").value;
 
   if (username === "" || password === "") {
-    alert("Por favor, completa todos los campos.");
+    Swal.fire({
+      title: "Por favor, completa todos los campos.",
+      icon: "error",
+      confirmButtonText: "Aceptar",
+    });
     return false;
   }
 

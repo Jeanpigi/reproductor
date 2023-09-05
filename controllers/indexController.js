@@ -58,8 +58,6 @@ exports.login = async (req, res) => {
       return res.redirect("/login");
     }
 
-    // req.session.user = { username };
-
     // Firmar el token con un objeto en lugar de una cadena
     const token = jwt.sign({ username: username }, process.env.JWT_SECRET, {
       expiresIn: "1h",

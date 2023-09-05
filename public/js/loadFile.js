@@ -1,31 +1,36 @@
-const enableUploadButton = () => {
-  const fileInput = document.getElementById("filePath");
-  const uploadButton = document.getElementById("uploadButton");
+const fileTypeSelect = document.getElementById("fileTypeSelect");
+const filePathInput = document.getElementById("filePath");
+const uploadForm = document.getElementById("uploadForm");
+const uploadLabel = document.querySelector(".upload-label");
+const uploadButton = document.getElementById("uploadButton");
 
-  uploadButton.disabled = fileInput.files.length === 0;
+const enableUploadButton = () => {
+  if (fileTypeSelect.value !== "") {
+    uploadButton.disabled = !filePathInput.files.length;
+  }
+  showAlert();
 };
 
 const changeFormAction = (selectedOption) => {
-  const uploadForm = document.getElementById("uploadForm");
-  const filePathInput = document.getElementById("filePath");
-  const uploadLabel = document.querySelector(".upload-label");
+  const actions = {
+    cancion: {
+      action: "/canciones",
+      name: "canciones",
+      for: "canciones",
+    },
+    anuncio: {
+      action: "/audios",
+      name: "audios",
+      for: "audios",
+    },
+  };
 
-  switch (selectedOption) {
-    case "cancion":
-      uploadForm.action = "/canciones";
-      filePathInput.name = "canciones";
-      uploadLabel.setAttribute("for", "canciones");
-      break;
-    case "anuncio":
-      uploadForm.action = "/audios";
-      filePathInput.name = "audios";
-      uploadLabel.setAttribute("for", "audios");
-      break;
-  }
+  const { action, name, for: htmlFor } = actions[selectedOption];
+
+  uploadForm.action = action;
+  filePathInput.name = name;
+  uploadLabel.setAttribute("for", htmlFor);
 };
-
-const fileTypeSelect = document.getElementById("fileTypeSelect");
-const filePathInput = document.getElementById("filePath");
 
 fileTypeSelect.addEventListener("change", () => {
   const selectedFileType = fileTypeSelect.value;
@@ -37,3 +42,16 @@ fileTypeSelect.addEventListener("change", () => {
     filePathInput.placeholder = "Archivo de anuncio";
   }
 });
+
+// Mostrar una alerta de SweetAlert2
+const showAlert = () => {
+  Swal.fire({
+    title: "Oops...",
+    text: "Debes seleccionar una canción o anuncio",
+    icon: "error",
+    confirmButtonText: "Aceptar",
+  }).then(() => {
+    // Limpiar el archivo seleccionado actualmente
+    filePathInput.value = "";
+  });
+};

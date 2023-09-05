@@ -13,7 +13,7 @@ module.exports = (server, baseDir) => {
   const recentlyPlayedSongs = [];
   const recentlyPlayedAds = [];
 
-  const MAX_RECENT_ITEMS = 60;
+  const MAX_RECENT_ITEMS = 120;
 
   io.on("connection", (socket) => {
     console.log("Cliente conectado");
