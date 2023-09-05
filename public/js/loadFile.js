@@ -7,8 +7,9 @@ const uploadButton = document.getElementById("uploadButton");
 const enableUploadButton = () => {
   if (fileTypeSelect.value !== "") {
     uploadButton.disabled = !filePathInput.files.length;
+  } else {
+    showAlert();
   }
-  showAlert();
 };
 
 const changeFormAction = (selectedOption) => {
