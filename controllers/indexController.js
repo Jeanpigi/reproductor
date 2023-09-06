@@ -29,7 +29,7 @@ exports.signup = async (req, res) => {
 
     // Crea un nuevo usuario
     await createUser(username, password);
-    res.redirect("/login");
+    res.redirect("/");
   } catch (error) {
     console.log(`Error que se está presentando es ${error}`);
     return res.redirect("/signup");
@@ -45,7 +45,7 @@ exports.login = async (req, res) => {
 
     if (!user) {
       console.log("El nombre de usuario es incorrecto");
-      return res.redirect("/login");
+      return res.redirect("/");
     }
 
     const isPasswordCorrect = await comparePasswords(
@@ -55,7 +55,7 @@ exports.login = async (req, res) => {
 
     if (!isPasswordCorrect) {
       console.log("La contraseña es incorrecto");
-      return res.redirect("/login");
+      return res.redirect("/");
     }
 
     // Firmar el token con un objeto en lugar de una cadena
@@ -68,7 +68,7 @@ exports.login = async (req, res) => {
     res.redirect("/canciones");
   } catch (error) {
     console.log(`Error que se está presentando es ${error}`);
-    return res.redirect("/login");
+    return res.redirect("/");
   }
 };
 

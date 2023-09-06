@@ -18,7 +18,7 @@ const controlInactividad = (req, res, next) => {
       console.log(
         "La sesión se cerró automáticamente debido a la inactividad."
       );
-      return res.redirect("/login");
+      return res.redirect("/");
     });
   }, tiempoInactividad);
 

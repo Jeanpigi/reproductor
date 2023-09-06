@@ -22,7 +22,6 @@ module.exports = (server, baseDir) => {
     const numClients = Object.keys(clients).length;
     console.log(`Número de clientes conectados: ${numClients}`);
 
-    // Obtiene las canciones desde la carpeta music en public
     const getSongs = async () => {
       const carpetaMusica = path.join(baseDir, "public", "music");
       try {
@@ -114,10 +113,6 @@ module.exports = (server, baseDir) => {
 
     socket.on("pause", () => {
       io.emit("pause");
-    });
-
-    socket.on("tags", (tags) => {
-      socket.broadcast.emit("tags", tags);
     });
 
     socket.on("disconnect", () => {

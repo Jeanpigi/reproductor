@@ -25,7 +25,7 @@ const {
 } = require("../controllers/spotifyController");
 
 // Ruta principal
-router.get("/", (req, res) => {
+router.get("/player", verificarSesion, (req, res) => {
   res.render("player");
 });
 
@@ -36,11 +36,11 @@ router.get("/signup", verificarSesion, (req, res) => {
 
 router.post("/signup", verificarSesion, signup);
 
-router.get("/login", (req, res) => {
+router.get("/", (req, res) => {
   res.render("login");
 });
 
-router.post("/login", login);
+router.post("/", login);
 
 // Rutas de canciones
 router.get("/canciones", verificarSesion, getAll, controlInactividad);
@@ -79,7 +79,7 @@ router.get("/api/anuncios", verificarSesion, anuncios);
 router.get("/logout", (req, res) => {
   // Elimina la cookie que almacena el token JWT
   res.clearCookie("token");
-  res.redirect("/login");
+  res.redirect("/");
 });
 
 // Ruta de manejo de errores 404
