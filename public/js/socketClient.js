@@ -18,7 +18,8 @@ let settings = {
   animationId: null,
   isDragging: false,
   isPlaying: false,
-  adDuration: 1200, // Duración del anuncio en segundos (10 minutos)
+  adDuration: 120, // Duración del anuncio en segundos (2 minutos)
+  // adDuration: 1200, // Duración del anuncio en segundos (10 minutos)
   accumulatedDuration: 0,
   originalMusicVolume: 1,
   isMicrophoneActive: false,
@@ -27,6 +28,7 @@ let settings = {
   isPausedByUser: false,
   audioContext: null,
   microphoneNode: null,
+  ads: [],
 };
 
 const socket = io();
@@ -48,6 +50,10 @@ const bindEvents = () => {
 
   socket.on("play", handleSocketPlay);
   socket.on("playAd", handleSocketPlayAd);
+  socket.on("ads", (anuncios) => {
+    console.log(anuncios);
+    settings.ads = anuncios;
+  });
   elements.playButton.addEventListener("click", handlePlayButtonClick);
   elements.forwardButton.addEventListener("click", nextSong);
   elements.backwardButton.addEventListener("click", nextSong);
@@ -110,6 +116,7 @@ const handleSocketPlayAd = (ad) => {
   settings.anuncio = ad;
   elements.audioPlayer.src = ad;
   playSong(ad);
+  changeSongtitle(ad);
 };
 
 const rotateImage = () => {
