@@ -103,6 +103,9 @@ exports.insertSong = async (req, res) => {
       const filename = file.filename;
       const filepath = file.path;
 
+      // Normalizar la ruta del archivo para garantizar compatibilidad entre sistemas operativos
+      const filepathNormalized = filepath.replace(/\\/g, "/");
+
       // Verifica si la cancion ya existe
       const songExists = await checkIfFileMusicExists(filename);
       if (songExists) {
@@ -110,7 +113,7 @@ exports.insertSong = async (req, res) => {
       }
 
       // Crea un nuevo usuario
-      await createSong(filename, filepath);
+      await createSong(filename, filepathNormalized);
 
       insertedSongs.push(filename);
     }
@@ -159,6 +162,7 @@ exports.deleteSong = async (req, res) => {
 exports.anuncios = async (req, res) => {
   try {
     const anuncios = await getAllAds();
+    console.log(anuncios);
     res.json(anuncios);
   } catch (error) {
     console.error(error);
@@ -187,14 +191,17 @@ exports.insertAudios = async (req, res) => {
       const filename = file.filename;
       const filepath = file.path;
 
+      // Normalizar la ruta del archivo para garantizar compatibilidad entre sistemas operativos
+      const filepathNormalized = filepath.replace(/\\/g, "/");
+
       // Verifica si la cancion ya existe
       const adExists = await checkIfFileAdExists(filename);
       if (adExists) {
         return res.send(`El anuncio '${filename}' ya existe`);
       }
 
-      // Crea un nuevo usuario
-      await createAd(filename, filepath);
+      // Crea un nuevo usuario utilizando la ruta normalizada
+      await createAd(filename, filepathNormalized);
 
       insertedAudios.push(filename);
     }

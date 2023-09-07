@@ -25,7 +25,7 @@ const {
 } = require("../controllers/spotifyController");
 
 // Ruta principal
-router.get("/player", verificarSesion, (req, res) => {
+router.get("/player", verificarSesion, (req,res) => {
   res.render("player");
 });
 

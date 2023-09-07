@@ -28,7 +28,7 @@ const musicUpload = multer({
       cb(new Error("Solo se permiten archivos MP3 y M4A."), false);
     }
   },
-}).array("canciones", 50);
+}).array("canciones", 100);
 
 const adsUpload = multer({
   storage: adsStorage,

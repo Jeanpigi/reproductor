@@ -1,6 +1,7 @@
 const socketIO = require("socket.io");
 const fs = require("fs").promises;
 const path = require("path");
+const axios = require("axios");
 
 module.exports = (server, baseDir) => {
   const io = socketIO(server, {
@@ -14,6 +15,11 @@ module.exports = (server, baseDir) => {
   const recentlyPlayedAds = [];
 
   const MAX_RECENT_ITEMS = 120;
+
+  // URL de la API externa
+  const apiUrl = "http://localhost:3005/api/anuncios";
+  // Aquí defines el nuevo array para guardar los datos de la API
+  const apiData = [];
 
   io.on("connection", (socket) => {
     console.log("Cliente conectado");
@@ -81,6 +87,19 @@ module.exports = (server, baseDir) => {
       return randomItem;
     };
 
+    // Función para obtener datos de la API y guardarlos en apiData
+    const fetchDataFromAPI = async () => {
+      try {
+        const response = await axios.get(apiUrl);
+        const responseData = response.data;
+        apiData[0] = responseData;
+        return responseData;
+      } catch (error) {
+        console.error("Error al obtener datos de la API:", error);
+        throw error;
+      }
+    };
+
     socket.on("play", () => {
       getSongs()
         .then((songs) => {
@@ -112,6 +131,13 @@ module.exports = (server, baseDir) => {
 
     socket.on("pause", () => {
       io.emit("pause");
+    });
+
+    socket.on("anuncios", async () => {
+      await fetchDataFromAPI();
+
+      // Utiliza 'socket' para enviar el mensaje al cliente actual
+      socket.emit("anuncios", apiData[0]);
     });
 
     socket.on("disconnect", () => {

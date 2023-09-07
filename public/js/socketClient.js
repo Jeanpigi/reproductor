@@ -54,6 +54,9 @@ const bindEvents = () => {
 
   socket.on("play", handleSocketPlay);
   socket.on("playAd", handleSocketPlayAd);
+  socket.on("anuncios", (apiData) => {
+    console.log(apiData);
+  });
 
   elements.playButton.addEventListener("click", handlePlayButtonClick);
   elements.forwardButton.addEventListener("click", nextSong);
@@ -111,7 +114,6 @@ const handleAudioEnded = () => {
   }
 };
 
-// Función para verificar y cambiar la canción según la hora actual
 // Función para verificar y cambiar la canción según la hora actual
 const checkAndPlayHimno = () => {
   const horaActual = new Date().getHours();
