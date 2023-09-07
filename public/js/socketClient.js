@@ -18,8 +18,8 @@ let settings = {
   animationId: null,
   isDragging: false,
   isPlaying: false,
-  adDuration: 120, // Duración del anuncio en segundos (2 minutos)
-  // adDuration: 1200, // Duración del anuncio en segundos (10 minutos)
+  // adDuration: 120, // Duración del anuncio en segundos (2 minutos)
+  adDuration: 1200, // Duración del anuncio en segundos (10 minutos)
   accumulatedDuration: 0,
   originalMusicVolume: 1,
   isMicrophoneActive: false,
@@ -29,6 +29,7 @@ let settings = {
   audioContext: null,
   microphoneNode: null,
   ads: [],
+  himno: "",
 };
 
 const socket = io();
@@ -39,7 +40,7 @@ const init = () => {
 };
 
 const bindEvents = () => {
-  socket.on("connection", () => {
+  socket.on("connect", () => {
     console.log(`El cliente se ha conectado al servidor de radio`);
   });
 
@@ -50,10 +51,10 @@ const bindEvents = () => {
 
   socket.on("play", handleSocketPlay);
   socket.on("playAd", handleSocketPlayAd);
-  socket.on("ads", (anuncios) => {
-    console.log(anuncios);
-    settings.ads = anuncios;
+  socket.on("playHimno", (nombreHimno) => {
+    console.log("Datos de audio recibidos:", nombreHimno);
   });
+
   elements.playButton.addEventListener("click", handlePlayButtonClick);
   elements.forwardButton.addEventListener("click", nextSong);
   elements.backwardButton.addEventListener("click", nextSong);
@@ -93,7 +94,6 @@ const handlePlayButtonClick = () => {
 };
 
 const handleSocketPlay = (cancion) => {
-  console.log("Reproduciendo cancion:", cancion);
   settings.song = cancion;
   elements.audioPlayer.src = cancion;
   playSong(cancion);
@@ -112,7 +112,6 @@ const handleAudioEnded = () => {
 };
 
 const handleSocketPlayAd = (ad) => {
-  console.log("Reproduciendo anuncio:", ad);
   settings.anuncio = ad;
   elements.audioPlayer.src = ad;
   playSong(ad);
@@ -142,8 +141,8 @@ const updateControls = () => {
   }
 };
 
-const changeSongtitle = (cancion) => {
-  const nombreArchivo = cancion.substring(cancion.lastIndexOf("/") + 1);
+const changeSongtitle = (audio) => {
+  const nombreArchivo = audio.substring(audio.lastIndexOf("/") + 1);
   elements.titulo.innerText = nombreArchivo;
 };
 

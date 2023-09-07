@@ -109,22 +109,15 @@ module.exports = (server, baseDir) => {
         .catch((error) => {
           console.error("Error al obtener el anuncio", error);
         });
-
-      // Llama a getAnuncios y pasa anunciosArray como argumento
-      getAnuncios(anuncios)
-        .then((anuncio) => {
-          // Ahora, anunciosArray contiene los anuncios obtenidos
-          console.log(anuncio);
-        })
-        .catch((error) => {
-          console.error("Error al obtener anuncios:", error);
-        });
-
-      io.emit("ads", anuncios);
     });
 
     socket.on("pause", () => {
       io.emit("pause");
+    });
+
+    socket.on("playHimno", () => {
+      const nombreHimno = "HimnoNacional.m4a";
+      io.emit("playHimno", nombreHimno);
     });
 
     socket.on("disconnect", () => {

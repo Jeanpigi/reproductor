@@ -43,7 +43,8 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use("/js", express.static("public/js"));
 app.use("/css", express.static("public/css"));
 app.use("/music", express.static("public/music"));
-app.use("/audios", express.static(path.join(__dirname, "public", "audios")));
+app.use("/audios", express.static("public/audios"));
+app.use("/himno", express.static("public/himno"));
 app.use("/assets", express.static("public/assets"));
 
 // Rutas
