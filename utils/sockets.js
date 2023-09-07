@@ -88,7 +88,6 @@ module.exports = (server, baseDir) => {
             songs,
             recentlyPlayedSongs
           );
-
           io.emit("play", randomSong);
         })
         .catch((error) => {
@@ -113,11 +112,6 @@ module.exports = (server, baseDir) => {
 
     socket.on("pause", () => {
       io.emit("pause");
-    });
-
-    socket.on("playHimno", () => {
-      const nombreHimno = "HimnoNacional.m4a";
-      io.emit("playHimno", nombreHimno);
     });
 
     socket.on("disconnect", () => {

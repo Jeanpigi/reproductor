@@ -18,8 +18,8 @@ let settings = {
   animationId: null,
   isDragging: false,
   isPlaying: false,
-  // adDuration: 120, // Duración del anuncio en segundos (2 minutos)
-  adDuration: 1200, // Duración del anuncio en segundos (10 minutos)
+  adDuration: 120, // Duración del anuncio en segundos (2 minutos)
+  // adDuration: 1200, // Duración del anuncio en segundos (20 minutos)
   accumulatedDuration: 0,
   originalMusicVolume: 1,
   isMicrophoneActive: false,
@@ -29,7 +29,8 @@ let settings = {
   audioContext: null,
   microphoneNode: null,
   ads: [],
-  himno: "",
+  cancionAnterior: "",
+  himno: "himno/HimnoNacional.m4a",
 };
 
 const socket = io();
@@ -37,6 +38,7 @@ const socket = io();
 const init = () => {
   elements.range.disabled = true;
   bindEvents();
+  checkAndPlayHimno();
 };
 
 const bindEvents = () => {
@@ -51,13 +53,10 @@ const bindEvents = () => {
 
   socket.on("play", handleSocketPlay);
   socket.on("playAd", handleSocketPlayAd);
-  socket.on("playHimno", (nombreHimno) => {
-    console.log("Datos de audio recibidos:", nombreHimno);
-  });
 
   elements.playButton.addEventListener("click", handlePlayButtonClick);
   elements.forwardButton.addEventListener("click", nextSong);
-  elements.backwardButton.addEventListener("click", nextSong);
+  elements.backwardButton.addEventListener("click", backSong);
   elements.range.addEventListener("input", updateProgress);
   elements.range.addEventListener("mousedown", () => {
     settings.isDragging = true;
@@ -111,6 +110,33 @@ const handleAudioEnded = () => {
   }
 };
 
+// Función para verificar y cambiar la canción según la hora actual
+// Función para verificar y cambiar la canción según la hora actual
+const checkAndPlayHimno = () => {
+  const horaActual = new Date().getHours();
+
+  // Horas en las que deseas reproducir el himno nacional
+  const horasHimno = [6, 12, 18]; // 6 AM, 12 PM, 6 PM
+
+  if (horasHimno.includes(horaActual)) {
+    // Detener la música actual si se está reproduciendo
+    if (settings.isPlaying) {
+      pauseSong();
+    }
+
+    // Cambiar la canción al himno nacional y reproducirla
+    settings.song = settings.himno;
+    elements.audioPlayer.src = settings.himno;
+    playSong(settings.himno);
+    changeSongtitle(settings.himno);
+  }
+
+  // Programar la próxima verificación en el próximo cambio de hora
+  const horaSiguiente = (horaActual + 1) % 24; // Siguiente hora
+  const milisegundosHastaSiguienteHora =
+    (60 - new Date().getMinutes()) * 60 * 1000; // Milisegundos hasta el próximo cambio de hora
+  setTimeout(checkAndPlayHimno, milisegundosHastaSiguienteHora);
+};
 const handleSocketPlayAd = (ad) => {
   settings.anuncio = ad;
   elements.audioPlayer.src = ad;
@@ -189,13 +215,19 @@ const pauseSong = () => {
   updateControls();
   stopRotation();
   settings.isRotating = false;
-
   settings.pausedTime = elements.audioPlayer.currentTime;
   settings.isPausedByUser = true;
 };
 
 const nextSong = () => {
+  settings.cancionAnterior = settings.song;
   socket.emit("play");
+};
+
+const backSong = () => {
+  console.log(settings.cancionAnterior);
+  playSong(settings.cancionAnterior);
+  changeSongtitle(settings.cancionAnterior);
 };
 
 const formatTime = (time) => {
