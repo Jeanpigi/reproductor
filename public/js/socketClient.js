@@ -111,32 +111,27 @@ const handleAudioEnded = () => {
 };
 
 // Función para verificar y cambiar la canción según la hora actual
-// Función para verificar y cambiar la canción según la hora actual
 const checkAndPlayHimno = () => {
   const horaActual = new Date().getHours();
-
-  // Horas en las que deseas reproducir el himno nacional
   const horasHimno = [6, 12, 18]; // 6 AM, 12 PM, 6 PM
 
   if (horasHimno.includes(horaActual)) {
-    // Detener la música actual si se está reproduciendo
-    if (settings.isPlaying) {
-      pauseSong();
-    }
-
-    // Cambiar la canción al himno nacional y reproducirla
+    elements.audioPlayer.volume = 0.2;
+    if (settings.isPlaying) pauseSong();
     settings.song = settings.himno;
     elements.audioPlayer.src = settings.himno;
     playSong(settings.himno);
     changeSongtitle(settings.himno);
+  } else {
+    elements.audioPlayer.volume = settings.originalMusicVolume;
   }
 
-  // Programar la próxima verificación en el próximo cambio de hora
-  const horaSiguiente = (horaActual + 1) % 24; // Siguiente hora
+  const horaSiguiente = (horaActual + 1) % 24;
   const milisegundosHastaSiguienteHora =
-    (60 - new Date().getMinutes()) * 60 * 1000; // Milisegundos hasta el próximo cambio de hora
+    (60 - new Date().getMinutes()) * 60 * 1000;
   setTimeout(checkAndPlayHimno, milisegundosHastaSiguienteHora);
 };
+
 const handleSocketPlayAd = (ad) => {
   settings.anuncio = ad;
   elements.audioPlayer.src = ad;
