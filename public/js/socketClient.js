@@ -18,8 +18,8 @@ let settings = {
   animationId: null,
   isDragging: false,
   isPlaying: false,
-  adDuration: 120, // Duración del anuncio en segundos (2 minutos)
-  // adDuration: 1200, // Duración del anuncio en segundos (20 minutos)
+  // adDuration: 120, // Duración del anuncio en segundos (2 minutos)
+  adDuration: 1200, // Duración del anuncio en segundos (20 minutos)
   accumulatedDuration: 0,
   originalMusicVolume: 1,
   isMicrophoneActive: false,
@@ -31,6 +31,7 @@ let settings = {
   ads: [],
   cancionAnterior: "",
   himno: "himno/HimnoNacional.m4a",
+  originalMusicVolume: 0.5,
 };
 
 const socket = io();
@@ -111,19 +112,20 @@ const handleAudioEnded = () => {
 };
 
 // Función para verificar y cambiar la canción según la hora actual
+// Función para verificar y cambiar la canción según la hora actual
 const checkAndPlayHimno = () => {
   const horaActual = new Date().getHours();
   const horasHimno = [6, 12, 18]; // 6 AM, 12 PM, 6 PM
 
   if (horasHimno.includes(horaActual)) {
-    elements.audioPlayer.volume = 0.2;
+    elements.audioPlayer.volume = 0.2; // Bajar el volumen si es hora del himno
     if (settings.isPlaying) pauseSong();
     settings.song = settings.himno;
     elements.audioPlayer.src = settings.himno;
     playSong(settings.himno);
     changeSongtitle(settings.himno);
   } else {
-    elements.audioPlayer.volume = settings.originalMusicVolume;
+    elements.audioPlayer.volume = settings.originalMusicVolume; // Restaurar el volumen original
   }
 
   const horaSiguiente = (horaActual + 1) % 24;
