@@ -31,7 +31,6 @@ let settings = {
   ads: [],
   cancionAnterior: "",
   himno: "himno/HimnoNacional.m4a",
-  originalMusicVolume: 0.5,
 };
 
 const socket = io();
@@ -120,14 +119,11 @@ const checkAndPlayHimno = () => {
   const horasHimno = [6, 12, 18]; // 6 AM, 12 PM, 6 PM
 
   if (horasHimno.includes(horaActual)) {
-    elements.audioPlayer.volume = 0.2; // Bajar el volumen si es hora del himno
     if (settings.isPlaying) pauseSong();
     settings.song = settings.himno;
     elements.audioPlayer.src = settings.himno;
     playSong(settings.himno);
     changeSongtitle(settings.himno);
-  } else {
-    elements.audioPlayer.volume = settings.originalMusicVolume; // Restaurar el volumen original
   }
 
   const horaSiguiente = (horaActual + 1) % 24;

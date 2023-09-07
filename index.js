@@ -13,7 +13,7 @@ const index = require("./routes/index");
 
 const app = express();
 const server = http.createServer(app);
-const port = process.env.PORT || 3007;
+const port = process.env.PORT || 3005;
 
 app.use(morgan("tiny"));
 app.use(express.json());
