@@ -187,6 +187,7 @@ const setProgress = (event) => {
 };
 
 const playSong = (cancion) => {
+  socket.emit("anuncios");
   if (!cancion) {
     return;
   }
