@@ -2,6 +2,7 @@ const socketIO = require("socket.io");
 const fs = require("fs").promises;
 const path = require("path");
 const { getAllAds } = require("../database/db");
+const moment = require("moment-timezone");
 
 module.exports = (server, baseDir) => {
   const io = socketIO(server, {
@@ -13,10 +14,9 @@ module.exports = (server, baseDir) => {
 
   const recentlyPlayedSongs = [];
   const recentlyPlayedAds = [];
+  const recentlyAnuncios = [];
 
   const MAX_RECENT_ITEMS = 120;
-
-  const apiData = [];
 
   io.on("connection", (socket) => {
     console.log("Cliente conectado");
@@ -58,6 +58,10 @@ module.exports = (server, baseDir) => {
       }
     };
 
+    const obtenerDiaActualEnColombia = () => {
+      return moment().tz("America/Bogota").locale("es").format("ddd");
+    };
+
     const obtenerAudioAleatoria = (array) => {
       const randomIndex = Math.floor(Math.random() * array.length);
       return array[randomIndex];
@@ -75,6 +79,47 @@ module.exports = (server, baseDir) => {
       }
 
       const randomItem = obtenerAudioAleatoria(availableOptions);
+      recentlyPlayed.push(randomItem);
+
+      if (recentlyPlayed.length > MAX_RECENT_ITEMS) {
+        recentlyPlayed.shift();
+      }
+
+      return randomItem;
+    };
+
+    const obtenerAudioAleatoriaSinRepetirConPrioridad = (
+      array,
+      recentlyPlayed
+    ) => {
+      const availableOptions = array.filter(
+        (item) => !recentlyPlayed.includes(item)
+      );
+
+      if (availableOptions.length === 0) {
+        // Si ya se han reproducido todas las opciones, reiniciar el registro
+        recentlyPlayed.length = 0;
+        return obtenerAudioAleatoriaSinRepetirConPrioridad(
+          array,
+          recentlyPlayed
+        );
+      }
+
+      // Obtener el día actual
+      const diaActual = obtenerDiaActualEnColombia();
+
+      // Filtrar los anuncios que coincidan con el día actual o que sean "T" (todos los días)
+      const opcionesConPrioridad = availableOptions.filter(
+        (item) => item.dia === diaActual || item.dia === "T"
+      );
+
+      if (opcionesConPrioridad.length === 0) {
+        // Si no hay opciones con prioridad, elige una aleatoria entre todas las disponibles
+        return obtenerAudioAleatoria(availableOptions);
+      }
+
+      // Elegir una opción con prioridad aleatoria
+      const randomItem = obtenerAudioAleatoria(opcionesConPrioridad);
       recentlyPlayed.push(randomItem);
 
       if (recentlyPlayed.length > MAX_RECENT_ITEMS) {
@@ -118,9 +163,17 @@ module.exports = (server, baseDir) => {
     });
 
     socket.on("anuncios", async () => {
-      const data = await getAllAds();
-      console.log("enviando data", data);
-      socket.emit("anuncios", data);
+      await getAllAds()
+        .then((ads) => {
+          const randomAd = obtenerAudioAleatoriaSinRepetirConPrioridad(
+            ads,
+            recentlyAnuncios
+          );
+          io.emit("anuncios", randomAd);
+        })
+        .catch((error) => {
+          console.error("Error al obtener el anuncio", error);
+        });
     });
 
     socket.on("disconnect", () => {
