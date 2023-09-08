@@ -21,8 +21,6 @@ let settings = {
   // adDuration: 120, // Duración del anuncio en segundos (2 minutos)
   adDuration: 1200, // Duración del anuncio en segundos (20 minutos)
   accumulatedDuration: 0,
-  originalMusicVolume: 1,
-  isMicrophoneActive: false,
   song: "",
   anuncio: "",
   isPausedByUser: false,
@@ -33,11 +31,13 @@ let settings = {
 };
 
 const socket = io();
+// Define la hora en la que deseas reproducir el himno (por ejemplo, a las 6:00 AM, 12:00 PM y 6:00 PM)
+const horasHimno = [6, 12, 18];
 
 const init = () => {
   elements.range.disabled = true;
   bindEvents();
-  checkAndPlayHimno();
+  scheduleNextPlayback();
 };
 
 const bindEvents = () => {
@@ -109,23 +109,36 @@ const handleAudioEnded = () => {
   }
 };
 
-// Función para verificar y cambiar la canción según la hora actual
-const checkAndPlayHimno = () => {
+// Función para reproducir el himno
+const reproducirHimno = () => {
   const horaActual = new Date().getHours();
-  const horasHimno = [6, 12, 18]; // 6 AM, 12 PM, 6 PM
-
   if (horasHimno.includes(horaActual)) {
-    if (settings.isPlaying) pauseSong();
+    // Reproduce el himno aquí
+    console.log("Reproducir el himno nacional");
+
+    pauseSong();
+    settings.song = "";
+
     settings.song = settings.himno;
     elements.audioPlayer.src = settings.himno;
     playSong(settings.himno);
     changeSongtitle(settings.himno);
   }
+};
 
-  const horaSiguiente = (horaActual + 1) % 24;
-  const milisegundosHastaSiguienteHora =
-    (60 - new Date().getMinutes()) * 60 * 1000;
-  setTimeout(checkAndPlayHimno, milisegundosHastaSiguienteHora);
+// Función para programar la próxima reproducción del himno
+// Function to schedule the next playback of the anthem
+const scheduleNextPlayback = () => {
+  const now = new Date();
+  const minutesRemaining = 60 - now.getMinutes();
+  const secondsRemaining = 60 - now.getSeconds();
+  const millisecondsUntilNextHour =
+    (minutesRemaining * 60 + secondsRemaining) * 1000;
+
+  setTimeout(() => {
+    playAnthem();
+    scheduleNextPlayback();
+  }, millisecondsUntilNextHour);
 };
 
 const handleSocketPlayAd = (ad) => {
