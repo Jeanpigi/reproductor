@@ -28,7 +28,6 @@ let settings = {
   isPausedByUser: false,
   audioContext: null,
   microphoneNode: null,
-  ads: [],
   cancionAnterior: "",
   himno: "himno/HimnoNacional.m4a",
 };
@@ -53,9 +52,6 @@ const bindEvents = () => {
 
   socket.on("play", handleSocketPlay);
   socket.on("playAd", handleSocketPlayAd);
-  socket.on("anuncios", (apiData) => {
-    console.log(apiData);
-  });
 
   elements.playButton.addEventListener("click", handlePlayButtonClick);
   elements.forwardButton.addEventListener("click", nextSong);
@@ -163,7 +159,7 @@ const updateControls = () => {
 };
 
 const changeSongtitle = (audio) => {
-  const nombreArchivo = audio.substring(audio.lastIndexOf("/") + 1);
+  const nombreArchivo = audio.split(/[\\/]/).pop();
   elements.titulo.innerText = nombreArchivo;
 };
 
@@ -187,7 +183,6 @@ const setProgress = (event) => {
 };
 
 const playSong = (cancion) => {
-  socket.emit("anuncios");
   if (!cancion) {
     return;
   }
