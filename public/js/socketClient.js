@@ -117,8 +117,6 @@ const reproducirHimno = () => {
     console.log("Reproducir el himno nacional");
 
     pauseSong();
-    settings.song = "";
-
     settings.song = settings.himno;
     elements.audioPlayer.src = settings.himno;
     playSong(settings.himno);
@@ -127,7 +125,6 @@ const reproducirHimno = () => {
 };
 
 // Función para programar la próxima reproducción del himno
-// Function to schedule the next playback of the anthem
 const scheduleNextPlayback = () => {
   const now = new Date();
   const minutesRemaining = 60 - now.getMinutes();
@@ -142,6 +139,11 @@ const scheduleNextPlayback = () => {
 };
 
 const handleSocketPlayAd = (ad) => {
+  if (!ad || typeof ad !== "string" || ad.trim() === "") {
+    nextSong();
+    return;
+  }
+
   settings.anuncio = ad;
   elements.audioPlayer.src = ad;
   playSong(ad);
