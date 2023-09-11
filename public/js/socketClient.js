@@ -88,7 +88,7 @@ const handlePlayButtonClick = () => {
 
 const handleSocketPlay = (cancion) => {
   if (!cancion || typeof cancion !== "string" || cancion.trim() === "") {
-    nextSong();
+    playSongOffline();
     return;
   }
   settings.song = cancion;
@@ -245,6 +245,13 @@ const playSong = (cancion) => {
     rotateImage();
     settings.isRotating = true;
   }
+};
+
+const playSongOffline = () => {
+  const localmusic = getRandomSongFromLocalStorage();
+  console.log(`Este es localmusic ${localmusic}`);
+  playSong(localmusic);
+  changeSongtitle(localmusic);
 };
 
 const pauseSong = () => {
