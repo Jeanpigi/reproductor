@@ -112,7 +112,6 @@ exports.insertSong = async (req, res) => {
         return res.send(`La canción '${filename}' ya existe`);
       }
 
-      // Crea un nuevo usuario
       await createSong(filename, filepathNormalized);
 
       insertedSongs.push(filename);

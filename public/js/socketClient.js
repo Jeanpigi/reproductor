@@ -92,7 +92,6 @@ const handleSocketPlay = (cancion) => {
     return;
   }
   settings.song = cancion;
-  console.log(`Reproduciendo la canción: ${settings.song}`);
   elements.audioPlayer.src = cancion;
   playSong(cancion);
   changeSongtitle(cancion);
@@ -149,7 +148,6 @@ const reproducirHimno = () => {
   if (horasHimno.includes(horaActual)) {
     pauseSong();
     settings.song = settings.himno;
-    console.log(`Reproduciendo el Himno: ${settings.himno}`);
     elements.audioPlayer.src = settings.himno;
     playSong(settings.himno);
     changeSongtitle(settings.himno);
@@ -164,8 +162,10 @@ const scheduleNextPlayback = () => {
   const millisecondsUntilNextHour =
     (minutesRemaining * 60 + secondsRemaining) * 1000;
 
-  setTimeout(reproducirHimno, millisecondsUntilNextHour);
-  setTimeout(scheduleNextPlayback, millisecondsUntilNextHour);
+  setTimeout(() => {
+    reproducirHimno();
+    scheduleNextPlayback();
+  }, millisecondsUntilNextHour);
 };
 
 const handleSocketPlayAd = (ad) => {
@@ -175,7 +175,6 @@ const handleSocketPlayAd = (ad) => {
   }
 
   settings.anuncio = ad;
-  console.log(`Reproduciendo el anuncio: ${settings.anuncio}`);
   elements.audioPlayer.src = ad;
   playSong(ad);
   changeSongtitle(ad);

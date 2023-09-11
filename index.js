@@ -52,7 +52,7 @@ app.use("/", index);
 
 // Importar y configurar sockets
 const socketHandler = require("./utils/sockets");
-socketHandler(server, __dirname);
+socketHandler(server);
 
 server.listen(port, () => {
   console.log(`Server is running on port ${port}`);

@@ -1,10 +1,8 @@
 const socketIO = require("socket.io");
-const fs = require("fs").promises;
-const path = require("path");
 const { getAllSongs, getAllAds } = require("../database/db");
 const moment = require("moment-timezone");
 
-module.exports = (server, baseDir) => {
+module.exports = (server) => {
   const io = socketIO(server, {
     reconnection: true,
     reconnectionDelay: 1000,
@@ -22,22 +20,6 @@ module.exports = (server, baseDir) => {
     clients[socket.id] = socket;
     const numClients = Object.keys(clients).length;
     console.log(`Número de clientes conectados: ${numClients}`);
-
-    const getSongs = async () => {
-      const carpetaMusica = path.join(baseDir, "public", "music");
-      try {
-        const archivos = await fs.readdir(carpetaMusica);
-        return archivos.map((archivo) =>
-          path.relative(
-            path.join(baseDir, "public"),
-            path.join(carpetaMusica, archivo)
-          )
-        );
-      } catch (err) {
-        console.log("Error al leer la carpeta de música:", err);
-        return [];
-      }
-    };
 
     const obtenerDiaActualEnColombia = () => {
       return moment().tz("America/Bogota").locale("es").format("ddd");
@@ -91,12 +73,8 @@ module.exports = (server, baseDir) => {
             songs,
             recentlyPlayedSongs
           );
-
           const decodedPath = decodeURIComponent(randomSong.filepath);
           const songWithoutPublic = decodedPath.replace("public/", "");
-          console.log(
-            `Esta es la canción decodificada de la base de datos ${songWithoutPublic}`
-          );
           io.emit("play", songWithoutPublic);
         })
         .catch((error) => {
@@ -109,14 +87,13 @@ module.exports = (server, baseDir) => {
     });
 
     socket.on("ads", async () => {
+      const diaActual = obtenerDiaActualEnColombia();
+      console.log(diaActual);
       await getAllAds()
         .then((ads) => {
           const randomAd = obtenerAudioAleatoriaConPrioridad(ads);
           const decodedPath = decodeURIComponent(randomAd.filepath);
           const adWithoutPublic = decodedPath.replace("public/", "");
-          console.log(
-            `Esta es la ad decodificada de la base de datos ${adWithoutPublic}`
-          );
           io.emit("playAd", adWithoutPublic);
         })
         .catch((error) => {
