@@ -18,14 +18,12 @@ let settings = {
   animationId: null,
   isDragging: false,
   isPlaying: false,
-  // adDuration: 120, // Duración del anuncio en segundos (2 minutos)
-  adDuration: 1200, // Duración del anuncio en segundos (20 minutos)
+  adDuration: 120, // Duración del anuncio en segundos (2 minutos)
+  // adDuration: 1200, // Duración del anuncio en segundos (20 minutos)
   accumulatedDuration: 0,
   song: "",
   anuncio: "",
   isPausedByUser: false,
-  audioContext: null,
-  microphoneNode: null,
   cancionAnterior: "",
   himno: "himno/HimnoNacional.m4a",
 };
@@ -66,10 +64,7 @@ const bindEvents = () => {
   elements.range.addEventListener("click", (event) => {
     if (!settings.isDragging) setProgress(event);
   });
-  elements.audioPlayer.addEventListener("loadedmetadata", function () {
-    settings.accumulatedDuration += parseFloat(elements.audioPlayer.duration);
-    updateProgress();
-  });
+  elements.audioPlayer.addEventListener("loadedmetadata", loadMetaData);
   elements.audioPlayer.addEventListener(
     "timeupdate",
     debounce(updateProgress, 100)
@@ -92,15 +87,49 @@ const handlePlayButtonClick = () => {
 };
 
 const handleSocketPlay = (cancion) => {
+  if (!cancion || typeof cancion !== "string" || cancion.trim() === "") {
+    nextSong();
+    return;
+  }
   settings.song = cancion;
+  console.log(`Reproduciendo la canción: ${settings.song}`);
   elements.audioPlayer.src = cancion;
   playSong(cancion);
   changeSongtitle(cancion);
+
+  // Agregar la canción al localStorage
+  addUniqueSongToLocalStorage(cancion);
+};
+
+const addUniqueSongToLocalStorage = (song) => {
+  let playlist = JSON.parse(localStorage.getItem("playlist")) || [];
+
+  // Verificar si la canción ya está en la lista antes de agregarla
+  if (!playlist.includes(song)) {
+    playlist.push(song);
+    localStorage.setItem("playlist", JSON.stringify(playlist));
+  }
+};
+
+const getRandomSongFromLocalStorage = () => {
+  let playlist = JSON.parse(localStorage.getItem("playlist")) || [];
+
+  if (playlist.length === 0) {
+    return null; // No hay canciones en la lista
+  }
+
+  // Obtener una canción aleatoria
+  const randomIndex = Math.floor(Math.random() * playlist.length);
+  const randomSong = playlist.splice(randomIndex, 1)[0];
+
+  // Actualizar la lista en el localStorage
+  localStorage.setItem("playlist", JSON.stringify(playlist));
+
+  return randomSong;
 };
 
 const handleAudioEnded = () => {
   if (settings.accumulatedDuration >= settings.adDuration) {
-    settings.song = "";
     socket.emit("ads");
     settings.accumulatedDuration = 0;
   } else {
@@ -109,15 +138,18 @@ const handleAudioEnded = () => {
   }
 };
 
+const loadMetaData = () => {
+  settings.accumulatedDuration += parseFloat(elements.audioPlayer.duration);
+  updateProgress();
+};
+
 // Función para reproducir el himno
 const reproducirHimno = () => {
   const horaActual = new Date().getHours();
   if (horasHimno.includes(horaActual)) {
-    // Reproduce el himno aquí
-    console.log("Reproducir el himno nacional");
-
     pauseSong();
     settings.song = settings.himno;
+    console.log(`Reproduciendo el Himno: ${settings.himno}`);
     elements.audioPlayer.src = settings.himno;
     playSong(settings.himno);
     changeSongtitle(settings.himno);
@@ -132,10 +164,8 @@ const scheduleNextPlayback = () => {
   const millisecondsUntilNextHour =
     (minutesRemaining * 60 + secondsRemaining) * 1000;
 
-  setTimeout(() => {
-    playAnthem();
-    scheduleNextPlayback();
-  }, millisecondsUntilNextHour);
+  setTimeout(reproducirHimno, millisecondsUntilNextHour);
+  setTimeout(scheduleNextPlayback, millisecondsUntilNextHour);
 };
 
 const handleSocketPlayAd = (ad) => {
@@ -145,6 +175,7 @@ const handleSocketPlayAd = (ad) => {
   }
 
   settings.anuncio = ad;
+  console.log(`Reproduciendo el anuncio: ${settings.anuncio}`);
   elements.audioPlayer.src = ad;
   playSong(ad);
   changeSongtitle(ad);

@@ -1,7 +1,7 @@
 const socketIO = require("socket.io");
 const fs = require("fs").promises;
 const path = require("path");
-const { getAllAds } = require("../database/db");
+const { getAllSongs, getAllAds } = require("../database/db");
 const moment = require("moment-timezone");
 
 module.exports = (server, baseDir) => {
@@ -84,14 +84,15 @@ module.exports = (server, baseDir) => {
       return randomItem;
     };
 
-    socket.on("play", () => {
-      getSongs()
+    socket.on("play", async () => {
+      await getAllSongs()
         .then((songs) => {
           const randomSong = obtenerAudioAleatoriaSinRepetir(
             songs,
             recentlyPlayedSongs
           );
-          io.emit("play", randomSong);
+          const songWithoutPublic = randomSong.filepath.replace("public/", "");
+          io.emit("play", songWithoutPublic);
         })
         .catch((error) => {
           console.error("Error al obtener las canciones:", error);
@@ -107,6 +108,7 @@ module.exports = (server, baseDir) => {
         .then((ads) => {
           const randomAd = obtenerAudioAleatoriaConPrioridad(ads);
           const adWithoutPublic = randomAd.filepath.replace("public/", "");
+          console.log(typeof adWithoutPublic);
           io.emit("playAd", adWithoutPublic);
         })
         .catch((error) => {

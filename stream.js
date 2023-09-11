@@ -12,7 +12,7 @@ const SERVER_URL = "http://localhost:3005";
 
 const socket = io(SERVER_URL);
 
-const PORT = 3007;
+const PORT = 3006;
 
 const musicFolder = path.join(__dirname, "public", "music");
 const anunciosFolder = path.join(__dirname, "public", "audios");
