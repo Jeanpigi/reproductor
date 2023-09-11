@@ -1,11 +1,31 @@
-const fileTypeSelect = document.getElementById("fileTypeSelect");
-const filePathInput = document.getElementById("filePath");
-const uploadForm = document.getElementById("uploadForm");
-const uploadLabel = document.querySelector(".upload-label");
-const uploadButton = document.getElementById("uploadButton");
+const elements = {
+  fileTypeSelect: document.getElementById("fileTypeSelect"),
+  filePathInput: document.getElementById("filePath"),
+  uploadForm: document.getElementById("uploadForm"),
+  uploadLabel: document.querySelector(".upload-label"),
+  uploadButton: document.getElementById("uploadButton"),
+};
+
+const actions = {
+  cancion: {
+    action: "/canciones",
+    name: "canciones",
+    label: "Selecciona la canción:",
+    placeholder: "Archivo de canción",
+  },
+  anuncio: {
+    action: "/audios",
+    name: "audios",
+    label: "Selecciona el anuncio:",
+    placeholder: "Archivo de anuncio",
+  },
+};
 
 const enableUploadButton = () => {
-  if (fileTypeSelect.value !== "") {
+  const { fileTypeSelect, filePathInput, uploadButton } = elements;
+  const selectedOption = fileTypeSelect.value;
+
+  if (selectedOption) {
     uploadButton.disabled = !filePathInput.files.length;
   } else {
     showAlert();
@@ -13,38 +33,22 @@ const enableUploadButton = () => {
 };
 
 const changeFormAction = (selectedOption) => {
-  const actions = {
-    cancion: {
-      action: "/canciones",
-      name: "canciones",
-      for: "canciones",
-    },
-    anuncio: {
-      action: "/audios",
-      name: "audios",
-      for: "audios",
-    },
-  };
-
-  const { action, name, for: htmlFor } = actions[selectedOption];
+  const { uploadForm, filePathInput, uploadLabel } = elements;
+  const { action, name, label, placeholder } = actions[selectedOption];
 
   uploadForm.action = action;
   filePathInput.name = name;
-  uploadLabel.setAttribute("for", htmlFor);
+  uploadLabel.textContent = label;
+  filePathInput.placeholder = placeholder;
 };
 
-fileTypeSelect.addEventListener("change", () => {
-  const selectedFileType = fileTypeSelect.value;
-  if (selectedFileType === "canciones") {
-    fileInputLabel.textContent = "Selecciona la canción:";
-    filePathInput.placeholder = "Archivo de canción";
-  } else if (selectedFileType === "anuncios") {
-    fileInputLabel.textContent = "Selecciona el anuncio:";
-    filePathInput.placeholder = "Archivo de anuncio";
+elements.fileTypeSelect.addEventListener("change", () => {
+  const selectedOption = elements.fileTypeSelect.value;
+  if (selectedOption in actions) {
+    changeFormAction(selectedOption);
   }
 });
 
-// Mostrar una alerta de SweetAlert2
 const showAlert = () => {
   Swal.fire({
     title: "Oops...",
@@ -52,7 +56,18 @@ const showAlert = () => {
     icon: "error",
     confirmButtonText: "Aceptar",
   }).then(() => {
-    // Limpiar el archivo seleccionado actualmente
-    filePathInput.value = "";
+    elements.filePathInput.value = "";
   });
 };
+
+document.addEventListener("DOMContentLoaded", () => {
+  const logoutButton = document.querySelector(".logout-button");
+  if (logoutButton) {
+    logoutButton.addEventListener("click", () => {
+      const keysToRemove = ["playlist"];
+      keysToRemove.forEach((key) => {
+        localStorage.removeItem(key);
+      });
+    });
+  }
+});
