@@ -1,4 +1,5 @@
 const socketIO = require("socket.io");
+const cron = require("node-cron");
 const { getAllSongs, getAllAds } = require("../database/db");
 const moment = require("moment-timezone");
 
@@ -13,6 +14,9 @@ module.exports = (server) => {
   const recentlyPlayedSongs = [];
 
   const MAX_RECENT_ITEMS = 120;
+
+  // Define las horas en las que deseas reproducir el himno (por ejemplo, a las 6:00 AM, 12:00 PM y 6:00 PM)
+  const horasHimno = ["0 6 * * *", "0 12 * * *", "0 18 * * *"];
 
   io.on("connection", (socket) => {
     console.log("Cliente conectado");
@@ -64,6 +68,19 @@ module.exports = (server) => {
       const randomItem =
         opcionesPrioridad[Math.floor(Math.random() * opcionesPrioridad.length)];
       return randomItem;
+    };
+
+    // Función para reproducir el himno
+    const reproducirHimno = () => {
+      const himnoPath = "himno/HimnoNacional.m4a";
+      console.log("Reproduciendo el himno...");
+      io.emit("himno", himnoPath);
+      // Programa las tareas cron para reproducir el himno en las horas especificadas
+      horasHimno.forEach((hora) => {
+        cron.schedule(hora, () => {
+          reproducirHimno();
+        });
+      });
     };
 
     socket.on("play", async () => {

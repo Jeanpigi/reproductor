@@ -25,12 +25,9 @@ let settings = {
   anuncio: "",
   isPausedByUser: false,
   cancionAnterior: "",
-  himno: "himno/HimnoNacional.m4a",
 };
 
 const socket = io();
-// Define la hora en la que deseas reproducir el himno (por ejemplo, a las 6:00 AM, 12:00 PM y 6:00 PM)
-const horasHimno = [6, 12, 18];
 
 const init = () => {
   elements.range.disabled = true;
@@ -50,6 +47,13 @@ const bindEvents = () => {
 
   socket.on("play", handleSocketPlay);
   socket.on("playAd", handleSocketPlayAd);
+  socket.on("himno", (himnoPath) => {
+    pauseSong();
+    settings.song = himnoPath;
+    elements.audioPlayer.src = himnoPath;
+    playSong(himnoPath);
+    changeSongtitle(himnoPath);
+  });
 
   elements.playButton.addEventListener("click", handlePlayButtonClick);
   elements.forwardButton.addEventListener("click", nextSong);
@@ -140,32 +144,6 @@ const handleAudioEnded = () => {
 const loadMetaData = () => {
   settings.accumulatedDuration += parseFloat(elements.audioPlayer.duration);
   updateProgress();
-};
-
-// Función para reproducir el himno
-const reproducirHimno = () => {
-  const horaActual = new Date().getHours();
-  if (horasHimno.includes(horaActual)) {
-    pauseSong();
-    settings.song = settings.himno;
-    elements.audioPlayer.src = settings.himno;
-    playSong(settings.himno);
-    changeSongtitle(settings.himno);
-  }
-};
-
-// Función para programar la próxima reproducción del himno
-const scheduleNextPlayback = () => {
-  const now = new Date();
-  const minutesRemaining = 60 - now.getMinutes();
-  const secondsRemaining = 60 - now.getSeconds();
-  const millisecondsUntilNextHour =
-    (minutesRemaining * 60 + secondsRemaining) * 1000;
-
-  setTimeout(() => {
-    reproducirHimno();
-    scheduleNextPlayback();
-  }, millisecondsUntilNextHour);
 };
 
 const handleSocketPlayAd = (ad) => {
