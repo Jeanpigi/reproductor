@@ -91,7 +91,12 @@ module.exports = (server, baseDir) => {
             songs,
             recentlyPlayedSongs
           );
-          const songWithoutPublic = randomSong.filepath.replace("public/", "");
+
+          const decodedPath = decodeURIComponent(randomSong.filepath);
+          const songWithoutPublic = decodedPath.replace("public/", "");
+          console.log(
+            `Esta es la canción decodificada de la base de datos ${songWithoutPublic}`
+          );
           io.emit("play", songWithoutPublic);
         })
         .catch((error) => {
@@ -107,8 +112,11 @@ module.exports = (server, baseDir) => {
       await getAllAds()
         .then((ads) => {
           const randomAd = obtenerAudioAleatoriaConPrioridad(ads);
-          const adWithoutPublic = randomAd.filepath.replace("public/", "");
-          console.log(typeof adWithoutPublic);
+          const decodedPath = decodeURIComponent(randomAd.filepath);
+          const adWithoutPublic = decodedPath.replace("public/", "");
+          console.log(
+            `Esta es la ad decodificada de la base de datos ${adWithoutPublic}`
+          );
           io.emit("playAd", adWithoutPublic);
         })
         .catch((error) => {
