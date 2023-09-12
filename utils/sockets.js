@@ -118,6 +118,10 @@ module.exports = (server) => {
         });
     });
 
+    socket.on("playHimno", async () => {
+      await reproducirHimno();
+    });
+
     socket.on("disconnect", () => {
       console.log("Cliente desconectado");
       delete clients[socket.id];

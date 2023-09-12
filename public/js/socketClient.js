@@ -32,7 +32,6 @@ const socket = io();
 const init = () => {
   elements.range.disabled = true;
   bindEvents();
-  scheduleNextPlayback();
 };
 
 const bindEvents = () => {
@@ -92,43 +91,13 @@ const handlePlayButtonClick = () => {
 
 const handleSocketPlay = (cancion) => {
   if (!cancion || typeof cancion !== "string" || cancion.trim() === "") {
-    playSongOffline();
+    nextSong();
     return;
   }
   settings.song = cancion;
   elements.audioPlayer.src = cancion;
   playSong(cancion);
   changeSongtitle(cancion);
-
-  // Agregar la canción al localStorage
-  addUniqueSongToLocalStorage(cancion);
-};
-
-const addUniqueSongToLocalStorage = (song) => {
-  let playlist = JSON.parse(localStorage.getItem("playlist")) || [];
-
-  // Verificar si la canción ya está en la lista antes de agregarla
-  if (!playlist.includes(song)) {
-    playlist.push(song);
-    localStorage.setItem("playlist", JSON.stringify(playlist));
-  }
-};
-
-const getRandomSongFromLocalStorage = () => {
-  let playlist = JSON.parse(localStorage.getItem("playlist")) || [];
-
-  if (playlist.length === 0) {
-    return null; // No hay canciones en la lista
-  }
-
-  // Obtener una canción aleatoria
-  const randomIndex = Math.floor(Math.random() * playlist.length);
-  const randomSong = playlist.splice(randomIndex, 1)[0];
-
-  // Actualizar la lista en el localStorage
-  localStorage.setItem("playlist", JSON.stringify(playlist));
-
-  return randomSong;
 };
 
 const handleAudioEnded = () => {
@@ -222,13 +191,6 @@ const playSong = (cancion) => {
     rotateImage();
     settings.isRotating = true;
   }
-};
-
-const playSongOffline = () => {
-  const localmusic = getRandomSongFromLocalStorage();
-  console.log(`Este es localmusic ${localmusic}`);
-  playSong(localmusic);
-  changeSongtitle(localmusic);
 };
 
 const pauseSong = () => {
