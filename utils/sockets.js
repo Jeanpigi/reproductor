@@ -91,7 +91,6 @@ module.exports = (server, baseDir) => {
     // Función para reproducir el himno
     const reproducirHimno = () => {
       const himnoPath = "himno/HimnoNacional.m4a";
-      console.log("Reproduciendo el himno...");
       io.emit("himno", himnoPath);
     };
 
@@ -134,8 +133,6 @@ module.exports = (server, baseDir) => {
     });
 
     socket.on("ads", async () => {
-      const diaActual = obtenerDiaActualEnColombia();
-      console.log(diaActual);
       await getAllAds()
         .then((ads) => {
           const randomAd = obtenerAudioAleatoriaConPrioridad(ads);
@@ -150,7 +147,6 @@ module.exports = (server, baseDir) => {
     });
 
     socket.on("disconnect", () => {
-      console.log("Cliente desconectado");
       delete clients[socket.id];
     });
   });

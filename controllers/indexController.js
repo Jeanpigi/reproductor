@@ -39,7 +39,6 @@ exports.signup = async (req, res) => {
 // Consulta de datos de usuario
 exports.login = async (req, res) => {
   const { username, password } = req.body;
-
   try {
     const user = await getUserByUsername(username);
 

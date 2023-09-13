@@ -43,7 +43,6 @@ const checkIfUsernameExists = async (username) => {
 const createUser = async (username, password) => {
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
-    console.log(hashedPassword);
     await pool.query("INSERT INTO users (username, password) VALUES (?, ?)", [
       username,
       hashedPassword,

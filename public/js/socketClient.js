@@ -40,7 +40,6 @@ const bindEvents = () => {
   });
 
   socket.on("disconnect", () => {
-    console.log("Se ha perdido la conexión con el servidor");
     socket.connect();
   });
 
@@ -116,11 +115,13 @@ const handleSocketPlayAd = (ad) => {
     nextSong();
     return;
   }
-
+  settings.song = "";
   settings.anuncio = ad;
   elements.audioPlayer.src = ad;
   playSong(ad);
   changeSongtitle(ad);
+  stopRotation();
+  settings.isRotating = false;
 };
 
 const rotateImage = () => {
@@ -204,7 +205,6 @@ const nextSong = () => {
 };
 
 const backSong = () => {
-  console.log(settings.cancionAnterior);
   playSong(settings.cancionAnterior);
   changeSongtitle(settings.cancionAnterior);
 };
