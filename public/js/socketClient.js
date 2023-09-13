@@ -45,13 +45,7 @@ const bindEvents = () => {
 
   socket.on("play", handleSocketPlay);
   socket.on("playAd", handleSocketPlayAd);
-  socket.on("himno", (himnoPath) => {
-    pauseSong();
-    settings.song = himnoPath;
-    elements.audioPlayer.src = himnoPath;
-    playSong(himnoPath);
-    changeSongtitle(himnoPath);
-  });
+  socket.on("himno", handleHimnoPlay);
 
   elements.playButton.addEventListener("click", handlePlayButtonClick);
   elements.forwardButton.addEventListener("click", nextSong);
@@ -93,6 +87,16 @@ const handleSocketPlay = (cancion) => {
   elements.audioPlayer.src = cancion;
   playSong(cancion);
   changeSongtitle(cancion);
+};
+
+const handleHimnoPlay = (himno) => {
+  pauseSong();
+  settings.song = himno;
+  elements.audioPlayer.src = himno;
+  playSong(himno);
+  changeSongtitle(himno);
+  stopRotation();
+  settings.isRotating = false;
 };
 
 const handleAudioEnded = () => {
@@ -173,7 +177,7 @@ const setProgress = (event) => {
 
 const playSong = (cancion) => {
   if (!cancion) {
-    return;
+    nextSong();
   }
 
   if (settings.isPlaying) {
