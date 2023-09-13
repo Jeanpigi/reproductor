@@ -2,20 +2,20 @@ const socketIO = require("socket.io");
 const cron = require("node-cron");
 const fs = require("fs").promises;
 const path = require("path");
-const { getAllAds } = require("../database/db");
+const { getAllSongs, getAllAds } = require("../database/db");
 const moment = require("moment-timezone");
 
 module.exports = (server, baseDir) => {
   const io = socketIO(server, {
     reconnection: true,
-    reconnectionDelay: 1000,
+    reconnectionDelay: 2000,
   });
 
   const clients = {};
 
   const recentlyPlayedSongs = [];
 
-  const MAX_RECENT_ITEMS = 120;
+  const MAX_RECENT_ITEMS = 220;
 
   // Define las horas en las que deseas reproducir el himno (por ejemplo, a las 6:00 AM, 12:00 PM y 6:00 PM)
   const horasHimno = ["0 6 * * *", "0 12 * * *", "0 18 * * *"];
@@ -101,17 +101,30 @@ module.exports = (server, baseDir) => {
       });
     };
 
-    socket.on("play", () => {
-      getSongs()
+    socket.on("play", async () => {
+      await getAllSongs()
         .then((songs) => {
           const randomSong = obtenerAudioAleatoriaSinRepetir(
             songs,
             recentlyPlayedSongs
           );
-          io.emit("play", randomSong);
+          const decodedPath = decodeURIComponent(randomSong.filepath);
+          const songWithoutPublic = decodedPath.replace("public/", "");
+          io.emit("play", songWithoutPublic);
         })
         .catch((error) => {
-          console.error("Error al obtener las canciones:", error);
+          console.error("Error al obtener la cancion", error);
+          getSongs()
+            .then((songs) => {
+              const randomSong = obtenerAudioAleatoriaSinRepetir(
+                songs,
+                recentlyPlayedSongs
+              );
+              io.emit("play", randomSong);
+            })
+            .catch((error) => {
+              console.error("Error al obtener las canciones:", error);
+            });
         });
     });
 
@@ -131,6 +144,7 @@ module.exports = (server, baseDir) => {
         })
         .catch((error) => {
           console.error("Error al obtener el anuncio", error);
+          io.emit("playAd", "");
         });
     });
 
