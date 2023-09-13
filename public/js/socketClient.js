@@ -90,10 +90,6 @@ const handlePlayButtonClick = () => {
 };
 
 const handleSocketPlay = (cancion) => {
-  if (!cancion || typeof cancion !== "string" || cancion.trim() === "") {
-    nextSong();
-    return;
-  }
   settings.song = cancion;
   elements.audioPlayer.src = cancion;
   playSong(cancion);

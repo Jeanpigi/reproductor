@@ -1,9 +1,11 @@
 const socketIO = require("socket.io");
 const cron = require("node-cron");
-const { getAllSongs, getAllAds } = require("../database/db");
+const fs = require("fs").promises;
+const path = require("path");
+const { getAllAds } = require("../database/db");
 const moment = require("moment-timezone");
 
-module.exports = (server) => {
+module.exports = (server, baseDir) => {
   const io = socketIO(server, {
     reconnection: true,
     reconnectionDelay: 1000,
@@ -27,6 +29,22 @@ module.exports = (server) => {
 
     const obtenerDiaActualEnColombia = () => {
       return moment().tz("America/Bogota").locale("es").format("ddd");
+    };
+
+    const getSongs = async () => {
+      const carpetaMusica = path.join(baseDir, "public", "music");
+      try {
+        const archivos = await fs.readdir(carpetaMusica);
+        return archivos.map((archivo) =>
+          path.relative(
+            path.join(baseDir, "public"),
+            path.join(carpetaMusica, archivo)
+          )
+        );
+      } catch (err) {
+        console.log("Error al leer la carpeta de música:", err);
+        return [];
+      }
     };
 
     const obtenerAudioAleatoria = (array) => {
@@ -83,16 +101,14 @@ module.exports = (server) => {
       });
     };
 
-    socket.on("play", async () => {
-      await getAllSongs()
+    socket.on("play", () => {
+      getSongs()
         .then((songs) => {
           const randomSong = obtenerAudioAleatoriaSinRepetir(
             songs,
             recentlyPlayedSongs
           );
-          const decodedPath = decodeURIComponent(randomSong.filepath);
-          const songWithoutPublic = decodedPath.replace("public/", "");
-          io.emit("play", songWithoutPublic);
+          io.emit("play", randomSong);
         })
         .catch((error) => {
           console.error("Error al obtener las canciones:", error);
