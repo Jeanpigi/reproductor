@@ -93,13 +93,14 @@ module.exports = (server, baseDir) => {
       const himnoPath = "himno/HimnoNacional.m4a";
       console.log("Reproduciendo el himno...");
       io.emit("himno", himnoPath);
-      // Programa las tareas cron para reproducir el himno en las horas especificadas
-      horasHimno.forEach((hora) => {
-        cron.schedule(hora, () => {
-          reproducirHimno();
-        });
-      });
     };
+
+    // Programa las tareas cron para reproducir el himno en las horas especificadas
+    horasHimno.forEach((hora) => {
+      cron.schedule(hora, () => {
+        reproducirHimno();
+      });
+    });
 
     socket.on("play", async () => {
       await getAllSongs()
@@ -146,10 +147,6 @@ module.exports = (server, baseDir) => {
           console.error("Error al obtener el anuncio", error);
           io.emit("playAd", "");
         });
-    });
-
-    socket.on("playHimno", async () => {
-      await reproducirHimno();
     });
 
     socket.on("disconnect", () => {
