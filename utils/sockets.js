@@ -15,7 +15,7 @@ module.exports = (server, baseDir) => {
 
   const recentlyPlayedSongs = [];
 
-  const MAX_RECENT_ITEMS = 220;
+  const MAX_RECENT_ITEMS = 320;
 
   // Define las horas en las que deseas reproducir el himno (por ejemplo, a las 6:00 AM, 12:00 PM y 6:00 PM)
   const horasHimno = ["0 6 * * *", "0 12 * * *", "0 18 * * *"];
