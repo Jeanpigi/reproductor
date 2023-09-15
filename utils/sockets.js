@@ -15,10 +15,10 @@ module.exports = (server, baseDir) => {
 
   const recentlyPlayedSongs = [];
 
-  const MAX_RECENT_ITEMS = 320;
+  const MAX_RECENT_ITEMS = 500;
 
-  // Define las horas en las que deseas reproducir el himno (por ejemplo, a las 6:00 AM, 12:00 PM y 6:00 PM)
-  const horasHimno = ["0 6 * * *", "0 12 * * *", "0 18 * * *"];
+  // Define las horas en las que deseas reproducir el himno (por ejemplo, a las 6:00 AM,12:00 AM, 12:00 PM y 6:00 PM)
+  const horasHimno = ["0 6 * * *", "0 12 * * *", "0 18 * * *", "0 0 * * *"];
 
   io.on("connection", (socket) => {
     console.log("Cliente conectado");
@@ -97,6 +97,7 @@ module.exports = (server, baseDir) => {
     // Programa las tareas cron para reproducir el himno en las horas especificadas
     horasHimno.forEach((hora) => {
       cron.schedule(hora, () => {
+        console.log("Queda programada la hora del himno a las", hora);
         reproducirHimno();
       });
     });
