@@ -451,7 +451,9 @@ select {
   width: 200px;
   height: 200px;
   border-radius: 50%;
-  transition: transform 0.5s;
+  transform: rotate(0deg);
+  /* Indicamos la transición para una rotación suave */
+  transition: transform 0.5s ease-in-out;
 }
 
 .controls {

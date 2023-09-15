@@ -92,6 +92,7 @@ const handleSocketPlay = (cancion) => {
 const handleHimnoPlay = (himnoPath) => {
   console.log(himnoPath);
   pauseSong();
+  settings.song = "";
   settings.song = himnoPath;
   elements.audioPlayer.src = himnoPath;
   playSong(himnoPath);
