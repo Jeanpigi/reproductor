@@ -89,12 +89,13 @@ const handleSocketPlay = (cancion) => {
   changeSongtitle(cancion);
 };
 
-const handleHimnoPlay = (himno) => {
+const handleHimnoPlay = (himnoPath) => {
+  console.log(himnoPath);
   pauseSong();
-  settings.song = himno;
-  elements.audioPlayer.src = himno;
-  playSong(himno);
-  changeSongtitle(himno);
+  settings.song = himnoPath;
+  elements.audioPlayer.src = himnoPath;
+  playSong(himnoPath);
+  changeSongtitle(himnoPath);
   stopRotation();
   settings.isRotating = false;
 };
@@ -185,6 +186,7 @@ const playSong = (cancion) => {
     settings.pausedTime = 0;
   }
 
+  elements.audioPlayer.volume = 1;
   elements.audioPlayer.play();
   updateControls();
 

@@ -91,13 +91,13 @@ module.exports = (server, baseDir) => {
     // Función para reproducir el himno
     const reproducirHimno = () => {
       const himnoPath = "himno/HimnoNacional.m4a";
+      console.log(himnoPath);
       io.emit("himno", himnoPath);
     };
 
     // Programa las tareas cron para reproducir el himno en las horas especificadas
     horasHimno.forEach((hora) => {
       cron.schedule(hora, () => {
-        console.log("Queda programada la hora del himno a las", hora);
         reproducirHimno();
       });
     });
