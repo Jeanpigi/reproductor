@@ -1,17 +1,19 @@
 const express = require("express");
 const router = express.Router();
 
+const { signup, login } = require("../controllers/userController");
 const {
-  signup,
-  login,
   canciones,
-  getAll,
-  anuncios,
-  deleteSong,
-  insertAudios,
   insertSong,
+  deleteSong,
+} = require("../controllers/musicaController");
+const {
+  anuncios,
+  insertAudios,
   deleteAudios,
-} = require("../controllers/indexController");
+} = require("../controllers/adController");
+
+const { getAll } = require("../controllers/audioController");
 
 const { adsUpload, musicUpload } = require("../utils/multerConfig");
 

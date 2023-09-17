@@ -3,8 +3,9 @@ const controlInactividad = (req, res, next) => {
   req.session.touch();
 
   const tiempoInactividad = 600000;
+  const { temporizador } = req.session;
 
-  clearTimeout(req.session.temporizador);
+  clearTimeout(temporizador);
 
   req.session.temporizador = setTimeout(() => {
     req.session.destroy((err) => {

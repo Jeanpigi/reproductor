@@ -87,7 +87,6 @@ const handlePlayAdEvent = (anuncio) => {
 };
 
 const handleDisconnectEvent = () => {
-  console.log("Se ha perdido la conexión con el servidor");
   socket.connect();
 };
 
