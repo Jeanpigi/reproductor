@@ -9,7 +9,11 @@ const cookieParser = require("cookie-parser");
 const http = require("http");
 
 // Rutas
-const index = require("./routes/index");
+const userRoutes = require("./routes/userRoutes");
+const songRoutes = require("./routes/songRoutes");
+const adRoutes = require("./routes/adRoutes");
+const playerRoutes = require("./routes/playerRoutes");
+const errorRoutes = require("./routes/errorRoutes");
 
 const app = express();
 const server = http.createServer(app);
@@ -48,7 +52,11 @@ app.use("/himno", express.static("public/himno"));
 app.use("/assets", express.static("public/assets"));
 
 // Rutas
-app.use("/", index);
+app.use("/", userRoutes);
+app.use("/", playerRoutes);
+app.use("/", songRoutes);
+app.use("/", adRoutes);
+app.use("/", errorRoutes);
 
 // Importar y configurar sockets
 const socketHandler = require("./utils/sockets");

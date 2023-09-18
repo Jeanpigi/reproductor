@@ -91,7 +91,7 @@ module.exports = (server, baseDir) => {
 
     // Función para reproducir el himno
     const reproducirHimno = () => {
-      const himnoPath = "himno/HimnoNacional.m4a";
+      const himnoPath = "himno/HimnoNacional.mp3";
       console.log(himnoPath);
       io.emit("himno", himnoPath);
     };
