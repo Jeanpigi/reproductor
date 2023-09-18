@@ -7,7 +7,7 @@ const {
 
 const fs = require("fs");
 
-exports.anuncios = async (req, res) => {
+const anuncios = async (req, res) => {
   try {
     const anuncios = await getAllAds();
     console.log(anuncios);
@@ -18,7 +18,7 @@ exports.anuncios = async (req, res) => {
   }
 };
 
-exports.getAudios = async (req, res) => {
+const getAudios = async (req, res) => {
   try {
     const query = "SELECT * FROM anuncios";
     const [rows] = await pool.execute(query);
@@ -29,9 +29,11 @@ exports.getAudios = async (req, res) => {
   }
 };
 
-exports.insertAudios = async (req, res) => {
+const insertAudios = async (req, res) => {
   try {
     const files = req.files;
+    const { dia } = req.body;
+    console.log(`selectedDia: ${dia}`);
     const insertedAudios = [];
 
     for (let file of files) {
@@ -42,7 +44,7 @@ exports.insertAudios = async (req, res) => {
         return res.send(`El anuncio '${filename}' ya existe`);
       }
 
-      await createAd(filename, filepathNormalized);
+      await createAd(filename, filepathNormalized, dia);
 
       insertedAudios.push(filename);
     }
@@ -62,22 +64,35 @@ exports.insertAudios = async (req, res) => {
   }
 };
 
-exports.deleteAudios = async (req, res) => {
+const deleteAudios = async (req, res) => {
   const { id } = req.params;
   try {
     const anuncio = await removeAd(id);
     if (anuncio) {
       const filepath = anuncio[0].filepath;
+
       fs.unlink(filepath, (err) => {
-        if (err) console.error(err);
-        else console.log("Archivo eliminado exitosamente");
+        if (err) {
+          console.error(err);
+        } else {
+          console.log("Archivo eliminado exitosamente");
+        }
       });
       res.redirect("/canciones");
-    } else console.log("No existe el anuncio");
+    } else {
+      console.log("La audio no existe");
+    }
   } catch (error) {
     console.error(
       `Ocurrió un error al momento de insertar en la base de datos ${error}`
     );
+    res.redirect("/canciones");
   }
-  res.redirect("/canciones");
+};
+
+module.exports = {
+  insertAudios,
+  deleteAudios,
+  getAudios,
+  anuncios,
 };

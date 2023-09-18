@@ -1,7 +1,7 @@
 const { getAllSongs } = require("../model/song");
 const { getAllAds } = require("../model/ad");
 
-exports.getAll = async (req, res) => {
+const getAll = async (req, res) => {
   try {
     const canciones = await getAllSongs();
     const anuncios = await getAllAds();
@@ -11,3 +11,5 @@ exports.getAll = async (req, res) => {
     res.send("Error del parte del servidor");
   }
 };
+
+module.exports = { getAll };

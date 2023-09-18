@@ -4,6 +4,8 @@ const elements = {
   uploadForm: document.getElementById("uploadForm"),
   uploadLabel: document.querySelector(".upload-label"),
   uploadButton: document.getElementById("uploadButton"),
+  diaContainer: document.getElementById("diaContainer"),
+  diaSelected: document.getElementById("dia"),
 };
 
 const actions = {
@@ -33,13 +35,31 @@ const enableUploadButton = () => {
 };
 
 const changeFormAction = (selectedOption) => {
-  const { uploadForm, filePathInput, uploadLabel } = elements;
-  const { action, name, label, placeholder } = actions[selectedOption];
+  const { uploadForm, filePathInput, uploadLabel, diaContainer } = elements;
 
-  uploadForm.action = action;
-  filePathInput.name = name;
-  uploadLabel.textContent = label;
-  filePathInput.placeholder = placeholder;
+  // Verifica si selectedOption existe en el objeto actions
+  if (actions[selectedOption]) {
+    const { action, name, label, placeholder } = actions[selectedOption];
+
+    uploadForm.action = action;
+    filePathInput.name = name;
+    uploadLabel.textContent = label;
+    filePathInput.placeholder = placeholder;
+    // Si se selecciona "Anuncio," puedes obtener el valor de la selección de día
+    if (selectedOption === "anuncio") {
+      const selectedDia = elements.diaSelected.value;
+    }
+  } else {
+    // Maneja el caso en el que selectedOption no existe en actions
+    console.error(`Opción desconocida: ${selectedOption}`);
+    uploadForm.action = "";
+    filePathInput.name = "";
+    uploadLabel.textContent = "";
+    filePathInput.placeholder = "";
+  }
+
+  // Muestra u oculta el campo de día según la opción seleccionada
+  diaContainer.style.display = selectedOption === "anuncio" ? "block" : "none";
 };
 
 elements.fileTypeSelect.addEventListener("change", () => {

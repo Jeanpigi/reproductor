@@ -33,6 +33,19 @@
                     <label class="upload-label" for="file" id="fileInputLabel">Selecciona el archivo:</label>
                     <input class="upload-input" type="file" name="archivo" accept="audio/*" id="filePath"
                         oninput="enableUploadButton()" multiple />
+                    <div class="dia" id="diaContainer">
+                        <label class="upload-label" for="dia">Selecciona el día:</label>
+                        <select class="upload-select-dia" name="dia" id="dia">
+                            <option value="T" selected>Todos</option>
+                            <option value="lun.">Lunes</option>
+                            <option value="mar.">Martes</option>
+                            <option value="mier.">Miercoles</option>
+                            <option value="juev.">Jueves</option>
+                            <option value="vie.">Viernes</option>
+                            <option value="sab.">Sabado</option>
+                        </select>
+                    </div>
+
                     <button class="upload-button" id="uploadButton" type="submit" disabled>
                         Cargar
                     </button>

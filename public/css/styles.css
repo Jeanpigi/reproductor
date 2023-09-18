@@ -86,7 +86,7 @@ a {
 
 /* Estilos de la pagina de inicio*/
 .container__index {
-  height: 350px;
+  height: 390px;
   padding: 20px;
   background-color: var(--background);
   border-radius: 10px;
@@ -374,6 +374,18 @@ select {
 .custom-select select[multiple] option {
   white-space: normal;
   outline-color: var(--select-focus);
+}
+
+.dia {
+  margin-bottom: 15px;
+}
+
+#diaContainer {
+  display: none;
+}
+
+.upload-select-dia {
+  text-align: center;
 }
 
 /*La duración del player*/

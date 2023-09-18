@@ -7,7 +7,7 @@ const {
 
 const fs = require("fs");
 
-exports.canciones = async (req, res) => {
+const canciones = async (req, res) => {
   try {
     const canciones = await getAllSongs();
     res.json(canciones);
@@ -17,7 +17,7 @@ exports.canciones = async (req, res) => {
   }
 };
 
-exports.insertSong = async (req, res) => {
+const insertSong = async (req, res) => {
   try {
     const files = req.files; // Obtener los archivos subidos
     const insertedSongs = []; // Almacenar los nombres de las canciones insertadas
@@ -36,9 +36,11 @@ exports.insertSong = async (req, res) => {
         return res.send(`La canción '${filename}' ya existe`);
       }
 
-      await createSong(filename, filepathNormalized);
+      const song = await createSong(filename, filepathNormalized);
 
-      insertedSongs.push(filename);
+      if (song) {
+        insertedSongs.push(filename);
+      }
     }
 
     if (insertedSongs.length > 0) {
@@ -56,7 +58,7 @@ exports.insertSong = async (req, res) => {
   }
 };
 
-exports.deleteSong = async (req, res) => {
+const deleteSong = async (req, res) => {
   const { id } = req.params;
   try {
     const song = await removeSong(id);
@@ -81,3 +83,9 @@ exports.deleteSong = async (req, res) => {
     res.redirect("/canciones");
   }
 };
+
+module.exports = {
+  canciones,
+  insertSong,
+  deleteSong
+}

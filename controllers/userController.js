@@ -7,7 +7,7 @@ const {
 
 const jwt = require("jsonwebtoken");
 
-exports.signup = async (req, res) => {
+const signup = async (req, res) => {
   const { username, password } = req.body;
   try {
     // Verifica si el usuario ya existe
@@ -27,7 +27,7 @@ exports.signup = async (req, res) => {
 };
 
 // Consulta de datos de usuario
-exports.login = async (req, res) => {
+const login = async (req, res) => {
   const { username, password } = req.body;
   try {
     const user = await getUserByUsername(username);
@@ -59,4 +59,9 @@ exports.login = async (req, res) => {
     console.log(`Error que se está presentando es ${error}`);
     return res.redirect("/");
   }
+};
+
+module.exports = {
+  signup,
+  login,
 };

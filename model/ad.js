@@ -13,11 +13,11 @@ const checkIfFileAdExists = async (filename) => {
   }
 };
 
-const createAd = async (filename, filepath) => {
+const createAd = async (filename, filepath, selectedDia) => {
   try {
     await pool.query(
-      "INSERT INTO anuncios (filename, filepath) VALUES (?, ?)",
-      [filename, filepath]
+      "INSERT INTO anuncios (filename, filepath, dia) VALUES (?, ?, ?)",
+      [filename, filepath, selectedDia]
     );
   } catch (error) {
     console.error("Error en createAd:", error);
@@ -38,7 +38,7 @@ const getAllAds = async () => {
 const removeAd = async (id) => {
   try {
     const [adExist] = await pool.execute(
-      "SELECT * FROM anuncios WHERE id = ?",
+      "SELECT filepath FROM anuncios WHERE id = ?",
       [id]
     );
     if (!adExist) {
