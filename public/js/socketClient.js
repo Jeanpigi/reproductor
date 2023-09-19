@@ -90,13 +90,15 @@ const handleSocketPlay = (cancion) => {
 };
 
 const handleHimnoPlay = (himnoPath) => {
-  pauseSong();
+  elements.audioPlayer.pause();
   settings.song = "";
   elements.range.value = 0;
   elements.audioPlayer.currentTime = 0;
+  elements.audioPlayer.duration = 0;
   updateProgress();
   settings.song = himnoPath;
   elements.audioPlayer.src = himnoPath;
+  elements.audioPlayer.load();
   playSong(himnoPath);
   changeSongtitle(himnoPath);
   stopRotation();
