@@ -90,9 +90,11 @@ const handleSocketPlay = (cancion) => {
 };
 
 const handleHimnoPlay = (himnoPath) => {
-  console.log(himnoPath);
   pauseSong();
   settings.song = "";
+  elements.range.value = 0;
+  elements.audioPlayer.currentTime = 0;
+  updateProgress();
   settings.song = himnoPath;
   elements.audioPlayer.src = himnoPath;
   playSong(himnoPath);
