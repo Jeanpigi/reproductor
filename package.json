@@ -8,7 +8,8 @@
     "stream": "node --watch stream.js",
     "start": "concurrently \"node index.js\" \"node stream.js\"",
     "start-index": "node index.js",
-    "start-stream": "node stream.js"
+    "start-stream": "node stream.js",
+    "test": "node --test"
   },
   "keywords": [],
   "author": "",

@@ -16,7 +16,7 @@ module.exports = (server, baseDir) => {
 
   const recentlyPlayedSongs = [];
 
-  const MAX_RECENT_ITEMS = 500;
+  let MAX_RECENT_ITEMS = 0;
 
   // Define las horas en las que deseas reproducir el himno (por ejemplo, a las 6:00 AM,12:00 AM, 12:00 PM y 6:00 PM)
   const horasHimno = ["0 6 * * *", "0 12 * * *", "0 18 * * *", "0 0 * * *"];
@@ -47,6 +47,13 @@ module.exports = (server, baseDir) => {
         return [];
       }
     };
+
+    const getNumberMusic = async () => {
+      const songs = await getSongs();
+      return (MAX_RECENT_ITEMS = songs.length);
+    };
+
+    getNumberMusic();
 
     const obtenerAudioAleatoria = (array) => {
       const randomIndex = Math.floor(Math.random() * array.length);
@@ -112,6 +119,7 @@ module.exports = (server, baseDir) => {
           );
           const decodedPath = decodeURIComponent(randomSong.filepath);
           const songWithoutPublic = decodedPath.replace("public/", "");
+
           io.emit("play", songWithoutPublic);
         })
         .catch((error) => {

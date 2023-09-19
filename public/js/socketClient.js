@@ -187,7 +187,6 @@ const playSong = (cancion) => {
     settings.pausedTime = 0;
   }
 
-  elements.audioPlayer.volume = 1;
   elements.audioPlayer.play();
   updateControls();
 
