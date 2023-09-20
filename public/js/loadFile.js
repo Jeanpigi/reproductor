@@ -6,6 +6,7 @@ const elements = {
   uploadButton: document.getElementById("uploadButton"),
   diaContainer: document.getElementById("diaContainer"),
   diaSelected: document.getElementById("dia"),
+  loadingContainer: document.getElementById("loading-container"),
 };
 
 const actions = {
@@ -47,7 +48,8 @@ const changeFormAction = (selectedOption) => {
     filePathInput.placeholder = placeholder;
     // Si se selecciona "Anuncio," puedes obtener el valor de la selección de día
     if (selectedOption === "anuncio") {
-      const selectedDia = elements.diaSelected.value;
+      let selectedDia = elements.diaSelected.value;
+      console.log(selectedDia);
     }
   } else {
     // Maneja el caso en el que selectedOption no existe en actions
@@ -79,6 +81,26 @@ const showAlert = () => {
     elements.filePathInput.value = "";
   });
 };
+
+// Agrega una función para mostrar el spinner
+const showSpinner = () => {
+  elements.loadingContainer.style.display = "block";
+};
+
+// Agrega una función para ocultar el spinner
+const hideSpinner = () => {
+  elements.loadingContainer.style.display = "none";
+};
+
+// Agrega un evento al formulario de carga para mostrar el spinner cuando se envíe el formulario
+elements.uploadForm.addEventListener("submit", () => {
+  showSpinner(); // Muestra el spinner al enviar el formulario de carga
+});
+
+// Supongamos que tienes una función handleSuccessfulUpload() que se llama después de cargar el archivo con éxito.
+function handleSuccessfulUpload() {
+  hideSpinner(); // Oculta el spinner cuando la carga se completa con éxito
+}
 
 document.addEventListener("DOMContentLoaded", () => {
   const logoutButton = document.querySelector(".logout-button");

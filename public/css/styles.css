@@ -7,6 +7,7 @@
   --black: #24292e;
   --button: #f4782b;
   --hoveButton: #e8531b;
+  --whatsapp: #25d366;
   --select-border: #777;
   --select-focus: blue;
   --select-arrow: var(--select-border);
@@ -115,14 +116,15 @@ a {
 }
 
 .button__link {
-  display: inline-block;
-  padding: 10px 20px;
+  padding: 10px;
   background-color: var(--button);
   color: var(--white);
-  border-radius: 5px;
+  border: none;
+  border-radius: 18px;
   margin: 10px;
   cursor: pointer;
   text-decoration: none;
+  width: 50%;
 }
 
 .button__link:hover {
@@ -213,11 +215,11 @@ a {
 }
 
 .delete-button {
-  background-color: #f4782b;
-  color: white;
+  background-color: var(--button);
+  color: var(--white);
   padding: 10px;
   border: none;
-  border-radius: 4px;
+  border-radius: 18px;
   font-size: 10px;
   cursor: pointer;
 }
@@ -338,6 +340,51 @@ img {
 
 select {
   width: 100px;
+}
+
+/* Estilos para el contenedor del spinner */
+#loading-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  flex-direction: column;
+  background-color: rgba(255, 255, 255, 0.9);
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 4;
+}
+
+/* Estilos para el spinner en sí */
+.spinner {
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-top: 4px solid #3498db;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin: 0 auto;
+}
+
+/* Estilos para el texto "Cargando..." */
+#loading-container p {
+  margin: 0;
+  font-size: 18px;
+  color: #333;
+}
+
+/* Animación de rotación */
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .custom-select select {
@@ -522,11 +569,11 @@ select {
 
 .upload-button,
 .logout-button {
-  background-color: #f4782b;
-  color: white;
+  background-color: var(--button);
+  color: var(--white);
   padding: 10px 20px;
   border: none;
-  border-radius: 4px;
+  border-radius: 18px;
   font-size: 16px;
   cursor: pointer;
 }
@@ -558,31 +605,25 @@ select {
   align-items: center;
 }
 
+/* Estilos de WhatsApp */
 .whatsapp {
   position: fixed;
-  /* Fija el div en una posición */
   bottom: 20px;
-  /* Ajusta la distancia desde la parte inferior */
   right: 20px;
-  /* Ajusta la distancia desde la derecha */
-  background-color: #25d366;
-  /* Color de fondo de WhatsApp */
+  background-color: var(--whatsapp);
   padding: 10px;
-  /* Espacio alrededor del ícono */
   border-radius: 50%;
-  /* Hace que el contenedor sea circular */
   box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
-  /* Agrega una sombra */
   z-index: 1000;
-  /* Asegura que esté por encima de otros elementos */
 }
 
-/* Estilos para el ícono de WhatsApp */
 .whatsapp i {
   font-size: 24px;
-  /* Tamaño del ícono */
-  color: #fff;
-  /* Color del ícono */
+  color: var(--white);
+}
+
+.whatsapp:hover {
+  background-color: #128c7e;
 }
 
 /* Estilos para pantallas de ancho máximo de 420px (dispositivos móviles) */
