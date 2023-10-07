@@ -32,7 +32,7 @@ module.exports = (server, baseDir) => {
       return moment().tz("America/Bogota").locale("es").format("ddd");
     };
 
-    const getSongs = async () => {
+    const getLocalSongs = async () => {
       const carpetaMusica = path.join(baseDir, "public", "music");
       try {
         const archivos = await fs.readdir(carpetaMusica);
@@ -48,8 +48,24 @@ module.exports = (server, baseDir) => {
       }
     };
 
+    const getLocalAds = async () => {
+      const carpetaAnuncios = path.join(baseDir, "public", "audios");
+      try {
+        const archivos = await fs.readdir(carpetaAnuncios);
+        return archivos.map((archivo) =>
+          path.relative(
+            path.join(baseDir, "public"),
+            path.join(carpetaAnuncios, archivo)
+          )
+        );
+      } catch (err) {
+        console.log("Error al leer la carpeta de anuncios:", err);
+        return [];
+      }
+    };
+
     const getNumberMusic = async () => {
-      const songs = await getSongs();
+      const songs = await getLocalSongs();
       return (MAX_RECENT_ITEMS = songs.length);
     };
 
@@ -124,7 +140,7 @@ module.exports = (server, baseDir) => {
         })
         .catch((error) => {
           console.error("Error al obtener la cancion", error);
-          getSongs()
+          getLocalSongs()
             .then((songs) => {
               const randomSong = obtenerAudioAleatoriaSinRepetir(
                 songs,
@@ -152,7 +168,15 @@ module.exports = (server, baseDir) => {
         })
         .catch((error) => {
           console.error("Error al obtener el anuncio", error);
-          io.emit("playAd", "");
+          getLocalAds()
+            .then((ads) => {
+              const randomAd = obtenerAudioAleatoriaConPrioridad(ads);
+              io.emit("playAd", randomAd);
+            })
+            .catch((error) => {
+              console.error("Error al obtener las canciones:", error);
+              io.emit("playAd", "");
+            });
         });
     });
 

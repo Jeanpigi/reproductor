@@ -24,6 +24,7 @@
     "express-compression": "^1.0.2",
     "express-handlebars": "^7.0.7",
     "express-session": "^1.17.3",
+    "ffmpeg-normalize": "^1.8.0",
     "fluent-ffmpeg": "^2.1.2",
     "jsonwebtoken": "^9.0.2",
     "moment-timezone": "^0.5.43",

@@ -82,25 +82,21 @@ const showAlert = () => {
   });
 };
 
-// Agrega una función para mostrar el spinner
 const showSpinner = () => {
   elements.loadingContainer.style.display = "block";
 };
 
-// Agrega una función para ocultar el spinner
 const hideSpinner = () => {
   elements.loadingContainer.style.display = "none";
 };
 
-// Agrega un evento al formulario de carga para mostrar el spinner cuando se envíe el formulario
 elements.uploadForm.addEventListener("submit", () => {
   showSpinner(); // Muestra el spinner al enviar el formulario de carga
 });
 
-// Supongamos que tienes una función handleSuccessfulUpload() que se llama después de cargar el archivo con éxito.
-function handleSuccessfulUpload() {
+const handleSuccessfulUpload = () => {
   hideSpinner(); // Oculta el spinner cuando la carga se completa con éxito
-}
+};
 
 document.addEventListener("DOMContentLoaded", () => {
   const logoutButton = document.querySelector(".logout-button");
