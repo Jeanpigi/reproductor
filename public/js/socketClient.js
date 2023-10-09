@@ -66,6 +66,7 @@ const bindEvents = () => {
     debounce(updateProgress, 100)
   );
   elements.audioPlayer.addEventListener("ended", handleAudioEnded);
+  elements.audioPlayer.addEventListener("error", handleAudioError);
 };
 
 const handlePlayButtonClick = () => {
@@ -113,6 +114,10 @@ const handleAudioEnded = () => {
     nextSong();
     settings.anuncio = "";
   }
+};
+
+const handleAudioError = () => {
+  nextSong();
 };
 
 const loadMetaData = () => {

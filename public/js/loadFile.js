@@ -98,6 +98,49 @@ const handleSuccessfulUpload = () => {
   hideSpinner(); // Oculta el spinner cuando la carga se completa con éxito
 };
 
+const searchCanciones = () => {
+  const searchBar = document.getElementById("canciones-search");
+  const searchQuery = searchBar.value.toLowerCase();
+
+  const cancionesContent = document.getElementById("canciones-content");
+  const songTitles = cancionesContent.querySelectorAll(".song-title");
+
+  songTitles.forEach((title) => {
+    const songTitle = title.textContent.toLowerCase();
+
+    if (songTitle.includes(searchQuery)) {
+      title.parentElement.style.display = "block";
+    } else {
+      title.parentElement.style.display = "none";
+    }
+  });
+};
+
+const searchAnuncios = () => {
+  const searchBar = document.getElementById("anuncios-search");
+  const searchQuery = searchBar.value.toLowerCase();
+
+  const anunciosContent = document.getElementById("anuncios-content");
+  const anuncioTitles = anunciosContent.querySelectorAll(".song-title");
+
+  anuncioTitles.forEach((title) => {
+    const anuncioTitle = title.textContent.toLowerCase();
+
+    if (anuncioTitle.includes(searchQuery)) {
+      title.parentElement.style.display = "block";
+    } else {
+      title.parentElement.style.display = "none";
+    }
+  });
+};
+
+// Attach the search functionality to the input elements' input events
+const cancionesSearchBar = document.getElementById("canciones-search");
+cancionesSearchBar.addEventListener("input", searchCanciones);
+
+const anunciosSearchBar = document.getElementById("anuncios-search");
+anunciosSearchBar.addEventListener("input", searchAnuncios);
+
 document.addEventListener("DOMContentLoaded", () => {
   const logoutButton = document.querySelector(".logout-button");
   if (logoutButton) {

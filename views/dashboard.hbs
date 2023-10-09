@@ -8,11 +8,12 @@
 <div class="content__player">
     <div class="container__content">
         <h1>Canciones: {{canciones.length}}</h1>
-        <div class="content__song">
+        <input class="canciones-search" type="text" id="canciones-search" placeholder="Buscar Canciones...">
+        <div class="content__song" id="canciones-content">
             {{#each canciones}}
             <form action="/canciones/{{this.id}}" method="POST" class="delete-form">
                 <div class="content_form">
-                    <span class="song-title">{{this.filename}}</span>
+                    <span class="song-title" id="song-title">{{this.filename}}</span>
                     <button class="delete-button" type="submit" onclick="confirmDelete(event)">
                         <i class="fa fa-trash" aria-hidden="true"></i>
                     </button>
@@ -68,11 +69,12 @@
     </div>
     <div class="container__content">
         <h1>Anuncios: {{anuncios.length}}</h1>
-        <div class="content__song">
+        <input class="anuncios-search" type="text" id="anuncios-search" placeholder="Buscar Anuncios...">
+        <div class="content__song" id="anuncios-content">
             {{#each anuncios}}
             <form action="/audios/{{this.id}}" method="POST" class="delete-form">
                 <div class="content_form">
-                    <span class="song-title">{{this.filename}}</span>
+                    <span class="song-title" id="ad-title">{{this.filename}}</span>
                     <button class="delete-button" type="submit" onclick="confirmDelete(event)">
                         <i class="fa fa-trash" aria-hidden="true"></i>
                     </button>

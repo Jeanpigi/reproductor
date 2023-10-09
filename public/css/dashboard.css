@@ -35,6 +35,16 @@
     z-index: 4;
 }
 
+#canciones-search,
+#anuncios-search {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 13px;
+    margin-bottom: 10px;
+    font-size: 16px;
+}
+
 .custom-select {
     display: grid;
     grid-template-areas: "select";
