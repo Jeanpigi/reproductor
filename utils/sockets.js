@@ -15,11 +15,15 @@ module.exports = (server, baseDir) => {
   const clients = {};
 
   const recentlyPlayedSongs = [];
+  const recentlyPlayedAds = [];
 
   let MAX_RECENT_ITEMS = 0;
+  let MAX_RECENT_ITEMS_ADS = 0;
 
   // Define las horas en las que deseas reproducir el himno (por ejemplo, a las 6:00 AM,12:00 AM, 12:00 PM y 6:00 PM)
   const horasHimno = ["0 6 * * *", "0 12 * * *", "0 18 * * *", "0 0 * * *"];
+
+  const basePublicDir = path.join(baseDir, "public");
 
   io.on("connection", (socket) => {
     console.log("Cliente conectado");
@@ -33,7 +37,7 @@ module.exports = (server, baseDir) => {
     };
 
     const getLocalSongs = async () => {
-      const carpetaMusica = path.join(baseDir, "public", "music");
+      const carpetaMusica = path.join(basePublicDir, "music");
       try {
         const archivos = await fs.readdir(carpetaMusica);
         return archivos.map((archivo) =>
@@ -49,7 +53,7 @@ module.exports = (server, baseDir) => {
     };
 
     const getLocalAds = async () => {
-      const carpetaAnuncios = path.join(baseDir, "public", "audios");
+      const carpetaAnuncios = path.join(basePublicDir, "audios");
       try {
         const archivos = await fs.readdir(carpetaAnuncios);
         return archivos.map((archivo) =>
@@ -77,9 +81,13 @@ module.exports = (server, baseDir) => {
     };
 
     const obtenerAudioAleatoriaSinRepetir = (array, recentlyPlayed) => {
-      const availableOptions = array.filter(
-        (item) => !recentlyPlayed.includes(item)
-      );
+      const availableOptions = array.filter((item) => {
+        const fileName = item.filename;
+        // Compara el nombre del archivo con los nombres de archivos reproducidos recientemente
+        return !recentlyPlayed.some(
+          (playedItem) => playedItem.filename === fileName
+        );
+      });
 
       if (availableOptions.length === 0) {
         // Si ya se han reproducido todas las opciones, reiniciar el registro
@@ -94,21 +102,47 @@ module.exports = (server, baseDir) => {
         recentlyPlayed.shift();
       }
 
+      console.log("count of songs in recently played:", recentlyPlayed.length);
+
       return randomItem;
     };
 
-    const obtenerAudioAleatoriaConPrioridad = (array) => {
+    const obtenerAnuncioAleatorioConPrioridad = (array, recentlyPlayedAds) => {
       const diaActual = obtenerDiaActualEnColombia();
-      const opcionesPrioridad = array.filter(
+      let opcionesPrioridad = array.filter(
         (item) => item.dia === diaActual || item.dia === "T"
       );
 
-      if (opcionesPrioridad.length === 0) {
-        return obtenerAudioAleatoriaConPrioridad(array);
+      // Asegurarse de que opcionesPrioridad sea un arreglo
+      if (!Array.isArray(opcionesPrioridad)) {
+        opcionesPrioridad = [opcionesPrioridad];
       }
 
-      const randomItem =
-        opcionesPrioridad[Math.floor(Math.random() * opcionesPrioridad.length)];
+      // Filtra las opciones disponibles que no se han reproducido recientemente
+      const opcionesDisponibles = opcionesPrioridad.filter((item) => {
+        const fileName = item.filename;
+        // Compara el nombre del archivo con los nombres de archivos reproducidos recientemente
+        return !recentlyPlayedAds.some(
+          (playedItem) => playedItem.filename === fileName
+        );
+      });
+
+      if (opcionesDisponibles.length === 0) {
+        // Si no hay opciones disponibles que no se hayan reproducido recientemente, reiniciar el registro
+        recentlyPlayedAds.length = 0;
+        return obtenerAnuncioAleatorioConPrioridad(array, recentlyPlayedAds);
+      }
+
+      const randomItem = obtenerAudioAleatoria(opcionesDisponibles);
+      recentlyPlayedAds.push(randomItem);
+
+      if (recentlyPlayedAds.length > MAX_RECENT_ITEMS_ADS) {
+        recentlyPlayedAds.shift();
+      }
+
+      console.log("Recently Played Ads:", recentlyPlayedAds);
+      console.log("count of Ads in recently played:", recentlyPlayedAds.length);
+
       return randomItem;
     };
 
@@ -120,38 +154,37 @@ module.exports = (server, baseDir) => {
     };
 
     // Programa las tareas cron para reproducir el himno en las horas especificadas
-    horasHimno.forEach((hora) => {
+    for (const hora of horasHimno) {
       cron.schedule(hora, () => {
         reproducirHimno();
       });
-    });
+    }
 
     socket.on("play", async () => {
-      await getAllSongs()
-        .then((songs) => {
-          const randomSong = obtenerAudioAleatoriaSinRepetir(
-            songs,
-            recentlyPlayedSongs
-          );
-          const decodedPath = decodeURIComponent(randomSong.filepath);
-          const songWithoutPublic = decodedPath.replace("public/", "");
-
-          io.emit("play", songWithoutPublic);
-        })
-        .catch((error) => {
-          console.error("Error al obtener la cancion", error);
-          getLocalSongs()
-            .then((songs) => {
-              const randomSong = obtenerAudioAleatoriaSinRepetir(
-                songs,
-                recentlyPlayedSongs
-              );
-              io.emit("play", randomSong);
-            })
-            .catch((error) => {
-              console.error("Error al obtener las canciones:", error);
-            });
-        });
+      try {
+        const songs = await getAllSongs();
+        const randomSong = obtenerAudioAleatoriaSinRepetir(
+          songs,
+          recentlyPlayedSongs
+        );
+        const decodedPath = decodeURIComponent(randomSong.filepath);
+        const songWithoutPublic = decodedPath.replace("public/", "");
+        io.emit("play", songWithoutPublic);
+      } catch (error) {
+        console.error("Error al obtener la canción", error);
+        // Puedes agregar aquí el manejo de errores, si es necesario
+        getLocalSongs()
+          .then((songs) => {
+            const randomSong = obtenerAudioAleatoriaSinRepetir(
+              songs,
+              recentlyPlayedSongs
+            );
+            io.emit("play", randomSong);
+          })
+          .catch((error) => {
+            console.error("Error al obtener las canciones:", error);
+          });
+      }
     });
 
     socket.on("pause", () => {
@@ -159,25 +192,32 @@ module.exports = (server, baseDir) => {
     });
 
     socket.on("ads", async () => {
-      await getAllAds()
-        .then((ads) => {
-          const randomAd = obtenerAudioAleatoriaConPrioridad(ads);
-          const decodedPath = decodeURIComponent(randomAd.filepath);
-          const adWithoutPublic = decodedPath.replace("public/", "");
-          io.emit("playAd", adWithoutPublic);
-        })
-        .catch((error) => {
-          console.error("Error al obtener el anuncio", error);
-          getLocalAds()
-            .then((ads) => {
-              const randomAd = obtenerAudioAleatoriaConPrioridad(ads);
-              io.emit("playAd", randomAd);
-            })
-            .catch((error) => {
-              console.error("Error al obtener las canciones:", error);
-              io.emit("playAd", "");
-            });
-        });
+      try {
+        const ads = await getAllAds();
+        const randomAd = obtenerAnuncioAleatorioConPrioridad(
+          ads,
+          recentlyPlayedAds
+        );
+        const decodedPath = decodeURIComponent(randomAd.filepath);
+        const adWithoutPublic = decodedPath.replace("public/", "");
+        io.emit("playAd", adWithoutPublic);
+      } catch (error) {
+        console.error("Error al obtener el anuncio", error);
+
+        // Manejar el error aquí y luego llamar a getLocalAds
+        getLocalAds()
+          .then((ads) => {
+            const randomAd = obtenerAnuncioAleatorioConPrioridad(
+              ads,
+              recentlyPlayedAds
+            );
+            io.emit("playAd", randomAd);
+          })
+          .catch((error) => {
+            console.error("Error al obtener los anuncios:", error);
+            io.emit("playAd", "");
+          });
+      }
     });
 
     socket.on("disconnect", () => {
