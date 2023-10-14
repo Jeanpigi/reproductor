@@ -108,7 +108,17 @@ module.exports = (server, baseDir) => {
         recentlyPlayed.shift();
       }
 
+      console.log(
+        "-----------------------------------------------------------"
+      );
+      console.log("Recently Played:", recentlyPlayed);
+      console.log(
+        "-----------------------------------------------------------"
+      );
       console.log("count of songs in recently played:", recentlyPlayed.length);
+      console.log(
+        "-----------------------------------------------------------"
+      );
 
       return randomItem;
     };
@@ -146,8 +156,17 @@ module.exports = (server, baseDir) => {
         recentlyPlayedAds.shift();
       }
 
+      console.log(
+        "-----------------------------------------------------------"
+      );
       console.log("Recently Played Ads:", recentlyPlayedAds);
+      console.log(
+        "-----------------------------------------------------------"
+      );
       console.log("count of Ads in recently played:", recentlyPlayedAds.length);
+      console.log(
+        "-----------------------------------------------------------"
+      );
 
       return randomItem;
     };
