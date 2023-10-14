@@ -73,7 +73,13 @@ module.exports = (server, baseDir) => {
       return (MAX_RECENT_ITEMS = songs.length);
     };
 
+    const getNumberAds = async () => {
+      const ads = await getLocalAds();
+      return (MAX_RECENT_ITEMS_ADS = ads.length);
+    };
+
     getNumberMusic();
+    getNumberAds();
 
     const obtenerAudioAleatoria = (array) => {
       const randomIndex = Math.floor(Math.random() * array.length);
