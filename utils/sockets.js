@@ -111,11 +111,7 @@ module.exports = (server, baseDir) => {
       console.log(
         "-----------------------------------------------------------"
       );
-      console.log("Recently Played:", recentlyPlayed);
-      console.log(
-        "-----------------------------------------------------------"
-      );
-      console.log("count of songs in recently played:", recentlyPlayed.length);
+      console.log("count of recently songs played:", recentlyPlayed.length);
       console.log(
         "-----------------------------------------------------------"
       );
@@ -163,7 +159,7 @@ module.exports = (server, baseDir) => {
       console.log(
         "-----------------------------------------------------------"
       );
-      console.log("count of Ads in recently played:", recentlyPlayedAds.length);
+      console.log("count of recently Ads played:", recentlyPlayedAds.length);
       console.log(
         "-----------------------------------------------------------"
       );
