@@ -87,21 +87,37 @@ module.exports = (server, baseDir) => {
     };
 
     const obtenerAudioAleatoriaSinRepetir = (array, recentlyPlayed) => {
-      const availableOptions = array.filter((item) => {
+      const availableOptionsWithPriority = array.filter((item) => {
         const fileName = item.filename;
-        // Compara el nombre del archivo con los nombres de archivos reproducidos recientemente
-        return !recentlyPlayed.some(
-          (playedItem) => playedItem.filename === fileName
+        // Verificar si el archivo es de diciembre y no se ha reproducido recientemente
+        return (
+          item.mes === "diciembre" &&
+          !recentlyPlayed.some((playedItem) => playedItem.filename === fileName)
         );
       });
 
-      if (availableOptions.length === 0) {
-        // Si ya se han reproducido todas las opciones, reiniciar el registro
+      const availableOptionsNonPriority = array.filter((item) => {
+        const fileName = item.filename;
+        // Verificar si el archivo no tiene un mes definido y no se ha reproducido recientemente
+        return (
+          !item.mes &&
+          !recentlyPlayed.some((playedItem) => playedItem.filename === fileName)
+        );
+      });
+
+      let randomItem;
+
+      // Intercalar entre música de diciembre y música sin mes definido
+      if (availableOptionsWithPriority.length > 0) {
+        randomItem = obtenerAudioAleatoria(availableOptionsWithPriority);
+      } else if (availableOptionsNonPriority.length > 0) {
+        randomItem = obtenerAudioAleatoria(availableOptionsNonPriority);
+      } else {
+        // Si no hay opciones disponibles, reiniciar el registro
         recentlyPlayed.length = 0;
-        return obtenerAudioAleatoriaSinRepetir(array, recentlyPlayed);
+        randomItem = obtenerAudioAleatoria(array);
       }
 
-      const randomItem = obtenerAudioAleatoria(availableOptions);
       recentlyPlayed.push(randomItem);
 
       if (recentlyPlayed.length > MAX_RECENT_ITEMS) {
