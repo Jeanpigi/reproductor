@@ -19,7 +19,9 @@ let settings = {
   isDragging: false,
   isPlaying: false,
   // adDuration: 120, // Duración del anuncio en segundos (2 minutos)
-  adDuration: 1200, // Duración del anuncio en segundos (20 minutos)
+  adDuration: 600, // Duración del anuncio en segundos (10 minutos)
+  // adDuration: 900, // Duración del anuncio en segundos (15 minutos)
+  // adDuration: 1200, // Duración del anuncio en segundos (20 minutos)
   accumulatedDuration: 0,
   song: "",
   anuncio: "",
