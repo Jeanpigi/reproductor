@@ -3,7 +3,7 @@ const {
   createUser,
   getUserByUsername,
   comparePasswords,
-} = require("../model/user");
+} = require("../model/userLite");
 
 const jwt = require("jsonwebtoken");
 
@@ -56,7 +56,7 @@ const login = async (req, res) => {
 
     res.redirect("/canciones");
   } catch (error) {
-    console.log(`Error que se está presentando es ${error}`);
+    console.log(`Error que se está presentando en el usuario es: ${error}`);
     return res.redirect("/");
   }
 };

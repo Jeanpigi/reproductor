@@ -3,7 +3,7 @@ const {
   createAd,
   checkIfFileAdExists,
   removeAd,
-} = require("../model/ad");
+} = require("../model/adLite");
 
 const fs = require("fs");
 
@@ -33,7 +33,6 @@ const insertAudios = async (req, res) => {
   try {
     const files = req.files;
     const { dia } = req.body;
-    console.log(`selectedDia: ${dia}`);
     const insertedAudios = [];
 
     for (let file of files) {

@@ -3,7 +3,7 @@ const {
   getAllSongs,
   createSong,
   removeSong,
-} = require("../model/song");
+} = require("../model/songLite");
 
 const fs = require("fs");
 
@@ -22,10 +22,8 @@ const insertSong = async (req, res) => {
     const files = req.files; // Obtener los archivos subidos
     const insertedSongs = []; // Almacenar los nombres de las canciones insertadas
 
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      const filename = file.filename;
-      const filepath = file.path;
+    for (const file of files) {
+      const { filename, path: filepath } = file;
 
       // Normalizar la ruta del archivo para garantizar compatibilidad entre sistemas operativos
       const filepathNormalized = filepath.replace(/\\/g, "/");
@@ -43,11 +41,11 @@ const insertSong = async (req, res) => {
       }
     }
 
-    if (insertedSongs.length > 0) {
-      console.log("Se completó la carga de las canciones: ", insertedSongs);
-    } else {
-      console.log("No se insertaron nuevas canciones");
-    }
+    const resultMessage =
+      insertedSongs.length > 0
+        ? `Se completó la carga de las canciones ${insertedSongs}`
+        : "No se insertaron nuevos canciones";
+    console.log(resultMessage);
 
     res.redirect("/canciones");
   } catch (error) {
@@ -87,5 +85,5 @@ const deleteSong = async (req, res) => {
 module.exports = {
   canciones,
   insertSong,
-  deleteSong
-}
+  deleteSong,
+};

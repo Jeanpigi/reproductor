@@ -1,5 +1,5 @@
-const { getAllSongs } = require("../model/song");
-const { getAllAds } = require("../model/ad");
+const { getAllSongs } = require("../model/songLite");
+const { getAllAds } = require("../model/adLite");
 
 const getAll = async (req, res) => {
   try {
