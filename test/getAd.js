@@ -1,6 +1,6 @@
 const test = require("node:test");
 const assert = require("assert");
-const { getAllAds } = require("../model/ad");
+const { getAllAds } = require("../model/adLite");
 
 test("Trayendo todas las canciones", async () => {
   const songs = await getAllAds();
