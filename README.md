@@ -1,6 +1,6 @@
 # Supermercado Primo - Reproductor y radio de Música Web
 
-El Supermercado Primo presenta un reproductor de música web y radio online el cuál esta desarrollado con las tecnologías Node.js, Express y Mysql. Esta aplicación avanzada permite a los usuarios disfrutar de su música favorita mientras brinda una experiencia fluida y confiable. Ambos servicios consumen la misma musica y anuncios.
+El Supermercado Primo presenta un reproductor de música web y radio online el cuál esta desarrollado con las tecnologías Node.js, Express y SqlLite. Esta aplicación avanzada permite a los usuarios disfrutar de su música favorita mientras brinda una experiencia fluida y confiable. Ambos servicios consumen la misma musica y anuncios.
 
 ## Características principales
 
@@ -15,8 +15,7 @@ El Supermercado Primo presenta un reproductor de música web y radio online el c
 
 Antes de ejecutar la aplicación, asegúrate de tener instalado lo siguiente:
 
-- Node.js (v16 o superior)
-- Mysql
+- Node.js (v18 o superior)
 
 ## Instalación
 
@@ -38,9 +37,14 @@ Antes de ejecutar la aplicación, asegúrate de tener instalado lo siguiente:
       npm install
    ```
 
-4. Configura la base de datos mysql:
+4. Configura la base de datos sqllite3:
 
-- La forma básica, es crear el nombre de la base de datos, con su respectivo usuario, password y tablas.
+- La forma básica, es crear el nombre de la base de datos, luego crear las tablas necesarias que para este caso serán: usuarios, canciones y anuncios. Nota: puedes crearla con una archivo .js en el directorio raíz del proyecto y correrlo con node.
+
+```bash
+     node db.js
+```
+
 - Las tablas que necesita son una para almacenar los usuarios, otra para alamacenar la ruta de la musica, y por último la tabla para alamcenar la ruta de los anuncios.
 
 5. Configura las variables de entorno:
