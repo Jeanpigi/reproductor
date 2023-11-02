@@ -2,8 +2,8 @@ const socketIO = require("socket.io");
 const cron = require("node-cron");
 const fs = require("fs").promises;
 const path = require("path");
-const { getAllSongs } = require("../model/song");
-const { getAllAds } = require("../model/ad");
+const { getAllSongs } = require("../model/songLite");
+const { getAllAds } = require("../model/adLite");
 const moment = require("moment-timezone");
 
 module.exports = (server, baseDir) => {
