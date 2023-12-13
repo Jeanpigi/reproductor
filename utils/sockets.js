@@ -201,33 +201,6 @@ module.exports = (server, baseDir) => {
       });
     }
 
-    // socket.on("play", async () => {
-    //   try {
-    //     const songs = await getAllSongs();
-    //     const randomSong = obtenerAudioAleatoriaSinRepetir(
-    //       songs,
-    //       recentlyPlayedSongs
-    //     );
-    //     const decodedPath = decodeURIComponent(randomSong.filepath);
-    //     const songWithoutPublic = decodedPath.replace("public/", "");
-    //     io.emit("play", songWithoutPublic);
-    //   } catch (error) {
-    //     console.error("Error al obtener la canción", error);
-    //     // Puedes agregar aquí el manejo de errores, si es necesario
-    //     getLocalSongs()
-    //       .then((songs) => {
-    //         const randomSong = obtenerAudioAleatoriaSinRepetir(
-    //           songs,
-    //           recentlyPlayedSongs
-    //         );
-    //         io.emit("play", randomSong);
-    //       })
-    //       .catch((error) => {
-    //         console.error("Error al obtener las canciones:", error);
-    //       });
-    //   }
-    // });
-
     socket.on("play", async () => {
       try {
         const currentMonth = moment().format("M");
