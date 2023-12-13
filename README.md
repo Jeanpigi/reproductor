@@ -16,6 +16,8 @@ El Supermercado Primo presenta un reproductor de música web y radio online el c
 Antes de ejecutar la aplicación, asegúrate de tener instalado lo siguiente:
 
 - Node.js (v18 o superior)
+- Crear las carpetas correspondientes dentro de la carpeta public (music, audios, himno, diciembre);
+- Agregar los audios solo en la carpeta de diciembre en formato mp3, al igual debe agregar el himno en formato mp3 en la carpeta de himno.
 
 ## Instalación
 
