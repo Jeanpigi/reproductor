@@ -49,6 +49,7 @@ app.use("/css", express.static("public/css"));
 app.use("/music", express.static("public/music"));
 app.use("/audios", express.static("public/audios"));
 app.use("/himno", express.static("public/himno"));
+app.use("/diciembre", express.static("public/diciembre"));
 app.use("/assets", express.static("public/assets"));
 
 // Rutas

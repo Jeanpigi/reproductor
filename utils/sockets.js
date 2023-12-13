@@ -15,10 +15,14 @@ module.exports = (server, baseDir) => {
   const clients = {};
 
   const recentlyPlayedSongs = [];
+  const recentlyPlayedDecember = [];
   const recentlyPlayedAds = [];
 
   let MAX_RECENT_ITEMS = 0;
   let MAX_RECENT_ITEMS_ADS = 0;
+
+  let decemberSongCount = 0;
+  const DECEMBER_SONG_LIMIT = 4; // Cambia este número para ajustar la cantidad de canciones de diciembre
 
   // Define las horas en las que deseas reproducir el himno (por ejemplo, a las 6:00 AM,12:00 AM, 12:00 PM y 6:00 PM)
   const horasHimno = ["0 6 * * *", "0 12 * * *", "0 18 * * *", "0 0 * * *"];
@@ -64,6 +68,22 @@ module.exports = (server, baseDir) => {
         );
       } catch (err) {
         console.log("Error al leer la carpeta de anuncios:", err);
+        return [];
+      }
+    };
+
+    const getDecemberSongs = async () => {
+      const decemberMusicFolder = path.join(basePublicDir, "diciembre");
+      try {
+        const files = await fs.readdir(decemberMusicFolder);
+        return files.map((file) =>
+          path.relative(
+            path.join(baseDir, "public"),
+            path.join(decemberMusicFolder, file)
+          )
+        );
+      } catch (err) {
+        console.log("Error al leer la carpeta de música de diciembre:", err);
         return [];
       }
     };
@@ -181,19 +201,80 @@ module.exports = (server, baseDir) => {
       });
     }
 
+    // socket.on("play", async () => {
+    //   try {
+    //     const songs = await getAllSongs();
+    //     const randomSong = obtenerAudioAleatoriaSinRepetir(
+    //       songs,
+    //       recentlyPlayedSongs
+    //     );
+    //     const decodedPath = decodeURIComponent(randomSong.filepath);
+    //     const songWithoutPublic = decodedPath.replace("public/", "");
+    //     io.emit("play", songWithoutPublic);
+    //   } catch (error) {
+    //     console.error("Error al obtener la canción", error);
+    //     // Puedes agregar aquí el manejo de errores, si es necesario
+    //     getLocalSongs()
+    //       .then((songs) => {
+    //         const randomSong = obtenerAudioAleatoriaSinRepetir(
+    //           songs,
+    //           recentlyPlayedSongs
+    //         );
+    //         io.emit("play", randomSong);
+    //       })
+    //       .catch((error) => {
+    //         console.error("Error al obtener las canciones:", error);
+    //       });
+    //   }
+    // });
+
     socket.on("play", async () => {
       try {
-        const songs = await getAllSongs();
-        const randomSong = obtenerAudioAleatoriaSinRepetir(
-          songs,
-          recentlyPlayedSongs
-        );
-        const decodedPath = decodeURIComponent(randomSong.filepath);
-        const songWithoutPublic = decodedPath.replace("public/", "");
-        io.emit("play", songWithoutPublic);
+        const currentMonth = moment().format("M");
+        let songPath;
+
+        if (currentMonth === "12") {
+          // Si es diciembre
+          if (decemberSongCount < DECEMBER_SONG_LIMIT) {
+            const decemberSongs = await getDecemberSongs();
+            const song = obtenerAudioAleatoriaSinRepetir(
+              decemberSongs,
+              recentlyPlayedDecember
+            );
+            songPath = song
+              ? decodeURIComponent(song).replace("public/", "")
+              : null;
+            decemberSongCount++;
+          } else {
+            const songs = await getAllSongs();
+            const randomSong = obtenerAudioAleatoriaSinRepetir(
+              songs,
+              recentlyPlayedSongs
+            );
+            songPath = randomSong
+              ? decodeURIComponent(randomSong.filepath).replace("public/", "")
+              : null;
+            decemberSongCount = 0; // Resetear el contador para volver a las canciones de diciembre
+          }
+        } else {
+          const songs = await getAllSongs();
+          const randomSong = obtenerAudioAleatoriaSinRepetir(
+            songs,
+            recentlyPlayedSongs
+          );
+          songPath = randomSong
+            ? decodeURIComponent(randomSong.filepath).replace("public/", "")
+            : null;
+        }
+
+        if (songPath) {
+          console.log("Ruta de la canción:", songPath);
+          io.emit("play", songPath);
+        } else {
+          console.error("La ruta de la canción es inválida o undefined");
+        }
       } catch (error) {
         console.error("Error al obtener la canción", error);
-        // Puedes agregar aquí el manejo de errores, si es necesario
         getLocalSongs()
           .then((songs) => {
             const randomSong = obtenerAudioAleatoriaSinRepetir(
