@@ -19,6 +19,7 @@ module.exports = (server, baseDir) => {
   const recentlyPlayedAds = [];
 
   let MAX_RECENT_ITEMS = 0;
+  let MAX_RECENT_ITEMS_DECEMBER = 97;
   let MAX_RECENT_ITEMS_ADS = 0;
 
   let decemberSongCount = 0;
@@ -160,7 +161,7 @@ module.exports = (server, baseDir) => {
       const randomItem = obtenerAudioAleatoria(availableOptions);
       recentlyPlayedDecember.push(randomItem);
 
-      if (recentlyPlayedDecember.length > MAX_RECENT_ITEMS) {
+      if (recentlyPlayedDecember.length > MAX_RECENT_ITEMS_DECEMBER) {
         recentlyPlayedDecember.shift();
       }
 
@@ -168,7 +169,7 @@ module.exports = (server, baseDir) => {
         "-----------------------------------------------------------"
       );
       console.log(
-        "count of recently songs played:",
+        "count of recently songs of december played:",
         recentlyPlayedDecember.length
       );
       console.log(
