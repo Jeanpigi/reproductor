@@ -139,6 +139,45 @@ module.exports = (server, baseDir) => {
       return randomItem;
     };
 
+    const obtenerAudioAleatoriaSinRepetirDeciembre = (
+      array,
+      recentlyPlayedDecember
+    ) => {
+      const availableOptions = array.filter((item) => {
+        const fileName = item.filename;
+        // Compara el nombre del archivo con los nombres de archivos reproducidos recientemente
+        return !recentlyPlayedDecember.some(
+          (playedItem) => playedItem.filename === fileName
+        );
+      });
+
+      if (availableOptions.length === 0) {
+        // Si ya se han reproducido todas las opciones, reiniciar el registro
+        recentlyPlayedDecember.length = 0;
+        return obtenerAudioAleatoriaSinRepetir(array, recentlyPlayedDecember);
+      }
+
+      const randomItem = obtenerAudioAleatoria(availableOptions);
+      recentlyPlayedDecember.push(randomItem);
+
+      if (recentlyPlayedDecember.length > MAX_RECENT_ITEMS) {
+        recentlyPlayedDecember.shift();
+      }
+
+      console.log(
+        "-----------------------------------------------------------"
+      );
+      console.log(
+        "count of recently songs played:",
+        recentlyPlayedDecember.length
+      );
+      console.log(
+        "-----------------------------------------------------------"
+      );
+
+      return randomItem;
+    };
+
     const obtenerAnuncioAleatorioConPrioridad = (array, recentlyPlayedAds) => {
       const diaActual = obtenerDiaActualEnColombia();
       let opcionesPrioridad = array.filter(
@@ -210,7 +249,7 @@ module.exports = (server, baseDir) => {
           // Si es diciembre
           if (decemberSongCount < DECEMBER_SONG_LIMIT) {
             const decemberSongs = await getDecemberSongs();
-            const song = obtenerAudioAleatoriaSinRepetir(
+            const song = obtenerAudioAleatoriaSinRepetirDeciembre(
               decemberSongs,
               recentlyPlayedDecember
             );
@@ -218,6 +257,7 @@ module.exports = (server, baseDir) => {
               ? decodeURIComponent(song).replace("public/", "")
               : null;
             decemberSongCount++;
+            console.log(recentlyPlayedDecember);
           } else {
             const songs = await getAllSongs();
             const randomSong = obtenerAudioAleatoriaSinRepetir(
