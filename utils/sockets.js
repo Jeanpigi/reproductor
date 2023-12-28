@@ -144,12 +144,9 @@ module.exports = (server, baseDir) => {
       array,
       recentlyPlayedDecember
     ) => {
-      const availableOptions = array.filter((item) => {
-        const fileName = item.filename;
-        // Compara el nombre del archivo con los nombres de archivos reproducidos recientemente
-        return !recentlyPlayedDecember.some(
-          (playedItem) => playedItem.filename === fileName
-        );
+      // Filtra para obtener opciones que no se han reproducido recientemente
+      const availableOptions = array.filter((filePath) => {
+        return !recentlyPlayedDecember.includes(filePath);
       });
 
       if (availableOptions.length === 0) {
@@ -243,19 +240,19 @@ module.exports = (server, baseDir) => {
 
     socket.on("play", async () => {
       try {
-        const currentMonth = moment().format("M");
+        const currentMonth = moment().tz("America/Bogota").format("M");
         let songPath;
 
         if (currentMonth === "12") {
           // Si es diciembre
           if (decemberSongCount < DECEMBER_SONG_LIMIT) {
             const decemberSongs = await getDecemberSongs();
-            const song = obtenerAudioAleatoriaSinRepetirDeciembre(
+            const decemberSong = obtenerAudioAleatoriaSinRepetirDeciembre(
               decemberSongs,
               recentlyPlayedDecember
             );
-            songPath = song
-              ? decodeURIComponent(song).replace("public/", "")
+            songPath = decemberSong
+              ? decodeURIComponent(decemberSong).replace("public/", "")
               : null;
             decemberSongCount++;
             console.log(recentlyPlayedDecember);
