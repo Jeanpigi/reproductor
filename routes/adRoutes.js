@@ -10,6 +10,7 @@ const {
 // Middlewares
 const { controlInactividad } = require("../middleware/inactividad");
 const { verificarSesion } = require("../middleware/verificacion");
+const { checkNetworkConnectivity } = require("../middleware/checkNetwork");
 
 const { adsUpload } = require("../utils/multerConfig");
 
@@ -17,6 +18,7 @@ const { adsUpload } = require("../utils/multerConfig");
 router.post(
   "/audios",
   verificarSesion,
+  checkNetworkConnectivity,
   adsUpload,
   insertAudios,
   controlInactividad

@@ -12,6 +12,7 @@ const { getAll } = require("../controllers/audioController");
 // Middlewares
 const { controlInactividad } = require("../middleware/inactividad");
 const { verificarSesion } = require("../middleware/verificacion");
+const { checkNetworkConnectivity } = require("../middleware/checkNetwork");
 
 const { musicUpload } = require("../utils/multerConfig");
 
@@ -21,6 +22,7 @@ router.get("/canciones", verificarSesion, getAll, controlInactividad);
 router.post(
   "/canciones",
   verificarSesion,
+  checkNetworkConnectivity,
   musicUpload,
   insertSong,
   controlInactividad

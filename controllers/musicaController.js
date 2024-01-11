@@ -19,16 +19,13 @@ const canciones = async (req, res) => {
 
 const insertSong = async (req, res) => {
   try {
-    const files = req.files; // Obtener los archivos subidos
-    const insertedSongs = []; // Almacenar los nombres de las canciones insertadas
+    const files = req.files;
+    const insertedSongs = [];
 
     for (const file of files) {
       const { filename, path: filepath } = file;
-
-      // Normalizar la ruta del archivo para garantizar compatibilidad entre sistemas operativos
       const filepathNormalized = filepath.replace(/\\/g, "/");
 
-      // Verifica si la cancion ya existe
       const songExists = await checkIfFileMusicExists(filename);
       if (songExists) {
         return res.send(`La canción '${filename}' ya existe`);
