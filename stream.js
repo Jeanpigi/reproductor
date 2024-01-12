@@ -1,9 +1,8 @@
 const express = require("express");
-const compression = require("compression");
 const app = express();
-const http = require("http").createServer(app);
-const fs = require("fs");
 const path = require("path");
+const compression = require("compression");
+const fs = require("fs");
 const ffmpeg = require("fluent-ffmpeg");
 
 const io = require("socket.io-client");
@@ -12,34 +11,22 @@ const SERVER_URL = "http://localhost:3005";
 
 const socket = io(SERVER_URL);
 
-const PORT = 3006;
+// Define the port to run the server on
+const PORT = 3007;
 
-const musicFolder = path.join(__dirname, "public", "music");
-const anunciosFolder = path.join(__dirname, "public", "audios");
+const publicFolder = path.join(__dirname, "public");
 
-let currentSong = "";
-let currentAd = "";
-
+// Serve static files from a specific directory
 app.use(express.static("public"));
 app.use(compression());
 
-app.get("/stream", (req, res) => {
-  let filePath;
-  const clientIP = req.ip;
-  if (!currentSong) {
-    res.status(500).send("No hay canción para reproducir.");
-    return;
-  }
+let currentSong = "";
 
-  if (currentAd) {
-    filePath = path.join(anunciosFolder, currentAd);
-    currentAd = "";
-  } else if (currentSong) {
-    filePath = path.join(musicFolder, currentSong);
-  } else {
-    res.status(500).send("No hay canción ni anuncio para reproducir.");
-    return;
-  }
+// Handle root request
+app.get("/stream", (req, res) => {
+  const clientIP = req.ip;
+
+  filePath = path.join(publicFolder, currentSong);
 
   ffmpeg.ffprobe(filePath, (err, metadata) => {
     if (err) {
@@ -74,26 +61,14 @@ app.get("/stream", (req, res) => {
   });
 });
 
-// Manejo de eventos Socket.IO
-const handlePlayEvent = (cancion) => {
-  const nombreArchivo = cancion.split("/").pop();
-  currentSong = nombreArchivo;
-};
+socket.on("trackChange", (data) => {
+  const { track } = data;
+  console.log(track);
 
-const handlePlayAdEvent = (anuncio) => {
-  currentSong = "";
-  const nombreAnuncio = anuncio.split("/").pop();
-  currentAd = nombreAnuncio;
-};
+  currentSong = track;
+});
 
-const handleDisconnectEvent = () => {
-  socket.connect();
-};
-
-socket.on("play", handlePlayEvent);
-socket.on("playAd", handlePlayAdEvent);
-socket.on("disconnect", handleDisconnectEvent);
-
-http.listen(PORT, () => {
-  console.log(`Servidor de streaming iniciado en el puerto ${PORT}`);
+// Start the server
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });

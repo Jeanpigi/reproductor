@@ -1,0 +1,14 @@
+{
+  "apps": [
+    {
+      "name": "index",
+      "script": "./index.js",
+      "watch": true
+    },
+    {
+      "name": "stream",
+      "script": "./stream.js",
+      "watch": true
+    }
+  ]
+}

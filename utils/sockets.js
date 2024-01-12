@@ -223,12 +223,17 @@ module.exports = (server, baseDir) => {
 
       return randomItem;
     };
+    // Suponiendo que tienes una función que se activa cuando la pista cambia
+    const onTrackChange = (newTrack) => {
+      io.emit("trackChange", { track: newTrack });
+    };
 
     // Función para reproducir el himno
     const reproducirHimno = () => {
       const himnoPath = "himno/HimnoNacional.mp3";
       console.log(himnoPath);
       io.emit("himno", himnoPath);
+      onTrackChange(himnoPath);
     };
 
     // Programa las tareas cron para reproducir el himno en las horas especificadas
@@ -281,6 +286,7 @@ module.exports = (server, baseDir) => {
         if (songPath) {
           console.log("Ruta de la canción:", songPath);
           io.emit("play", songPath);
+          onTrackChange(songPath);
         } else {
           console.error("La ruta de la canción es inválida o undefined");
         }
@@ -293,6 +299,7 @@ module.exports = (server, baseDir) => {
               recentlyPlayedSongs
             );
             io.emit("play", randomSong);
+            onTrackChange(randomSong);
           })
           .catch((error) => {
             console.error("Error al obtener las canciones:", error);
@@ -314,6 +321,7 @@ module.exports = (server, baseDir) => {
         const decodedPath = decodeURIComponent(randomAd.filepath);
         const adWithoutPublic = decodedPath.replace("public/", "");
         io.emit("playAd", adWithoutPublic);
+        onTrackChange(adWithoutPublic);
       } catch (error) {
         console.error("Error al obtener el anuncio", error);
 
@@ -325,6 +333,7 @@ module.exports = (server, baseDir) => {
               recentlyPlayedAds
             );
             io.emit("playAd", randomAd);
+            onTrackChange(randomAd);
           })
           .catch((error) => {
             console.error("Error al obtener los anuncios:", error);

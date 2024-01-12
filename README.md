@@ -19,6 +19,10 @@ Antes de ejecutar la aplicación, asegúrate de tener instalado lo siguiente:
 - Crear las carpetas correspondientes dentro de la carpeta public (music, audios, himno, diciembre);
 - Agregar los audios solo en la carpeta de diciembre en formato mp3, al igual debe agregar el himno en formato mp3 en la carpeta de himno.
 
+Opcional:
+
+- Instalar pm2 para ejecutar la aplicación en segundo plano y tener mejor control de los dos archivos (index.js y stream.js).
+
 ## Instalación
 
 1. Clona este repositorio:
@@ -73,12 +77,20 @@ los servicios se dividen en dos, en el reproductor y la radio online, dependiend
       npm run start-stream
    ```
 
-9. Accede a la aplicación de radio en tu navegador web en la siguiente URL: http://localhost:3006
+9. Accede a la aplicación de radio en tu navegador web en la siguiente URL: http://localhost:3007/stream
 
 10. Si quieres correr ambos servidores a la vez se puede realizar mediante el siguiente comando:
 
 ```bash
    npm run start
+```
+
+## Nota
+
+En caso de instalar pm2 puede usar el siguiente comando para correr ambos servidores a la vez:
+
+```bash
+   pm2 start ecosystem.config.json
 ```
 
 ## Uso
