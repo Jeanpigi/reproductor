@@ -18,11 +18,7 @@ let settings = {
   animationId: null,
   isDragging: false,
   isPlaying: false,
-  // adDuration: 120, // Duración del anuncio en segundos (2 minutos)
-  // adDuration: 300, // Duración del anuncio en segundos (5 minutos)
-  //adDuration: 600, // Duración del anuncio en segundos (10 minutos)
-  adDuration: 900, // Duración del anuncio en segundos (15 minutos)
-  // adDuration: 1200, // Duración del anuncio en segundos (20 minutos)
+  adDuration: 900,
   accumulatedDuration: 0,
   song: "",
   anuncio: "",
@@ -30,7 +26,7 @@ let settings = {
   cancionAnterior: "",
 };
 
-const socket = io();
+const socket = new WebSocket("ws://localhost:3000");
 
 const init = () => {
   elements.range.disabled = true;
@@ -38,17 +34,32 @@ const init = () => {
 };
 
 const bindEvents = () => {
-  socket.on("connect", () => {
+  socket.addEventListener("open", () => {
     console.log(`El cliente se ha conectado al servidor de radio`);
   });
 
-  socket.on("disconnect", () => {
-    socket.connect();
+  socket.addEventListener("close", () => {
+    console.log("El cliente se ha desconectado del servidor de radio");
   });
 
-  socket.on("play", handleSocketPlay);
-  socket.on("playAd", handleSocketPlayAd);
-  socket.on("himno", handleHimnoPlay);
+  socket.addEventListener("message", (event) => {
+    const { event: eventType, path } = JSON.parse(event.data);
+
+    switch (eventType) {
+      case "play":
+        handleSocketPlay(path);
+        break;
+      case "playAd":
+        handleSocketPlayAd(path);
+        break;
+      case "himno":
+        handleHimnoPlay(path);
+        break;
+      case "pause":
+        pauseSong();
+        break;
+    }
+  });
 
   elements.playButton.addEventListener("click", handlePlayButtonClick);
   elements.forwardButton.addEventListener("click", nextSong);
@@ -77,12 +88,12 @@ const handlePlayButtonClick = () => {
     if (settings.isPlaying) {
       playSong(settings.song);
     } else {
-      socket.emit("play");
+      socket.send(JSON.stringify({ event: "play" }));
       settings.isPlaying = true;
     }
   } else {
     pauseSong();
-    socket.emit("pause");
+    socket.send(JSON.stringify({ event: "pause" }));
   }
 };
 
@@ -111,7 +122,7 @@ const handleHimnoPlay = (himnoPath) => {
 
 const handleAudioEnded = () => {
   if (settings.accumulatedDuration >= settings.adDuration) {
-    socket.emit("ads");
+    socket.send(JSON.stringify({ event: "ads" }));
     settings.accumulatedDuration = 0;
   } else {
     nextSong();
@@ -219,7 +230,7 @@ const pauseSong = () => {
 
 const nextSong = () => {
   settings.cancionAnterior = settings.song;
-  socket.emit("play");
+  socket.send(JSON.stringify({ event: "play" }));
 };
 
 const backSong = () => {

@@ -1,88 +1,88 @@
-const socketIO = require("socket.io");
+const WebSocket = require("ws");
 const cron = require("node-cron");
 const moment = require("moment-timezone");
-const {
-  getCachedSongs,
-  getCachedAds,
-  getCachedDecemberSongs,
-} = require("./getCached");
-
-const { getLocalSongs, getLocalAds } = require("./localFile");
-
+const { getAllSongs } = require("../model/songLite");
+const { getAllAds } = require("../model/adLite");
+const { getDecemberSongs } = require("./localFile");
 const {
   obtenerAnuncioAleatorioConPrioridad,
   obtenerAudioAleatoriaSinRepetirDeciembre,
   obtenerAudioAleatoriaSinRepetir,
 } = require("./getAudio");
 
-module.exports = (server) => {
-  const io = socketIO(server, {
-    reconnection: true,
-    reconnectionAttempts: 5, // Máximo número de intentos de reconexión
-    reconnectionDelay: 2000, // Tiempo inicial para reconectar
-    reconnectionDelayMax: 5000, // Tiempo máximo entre intentos de reconexión
-    randomizationFactor: 0.5,
-  });
+const server = require("http").createServer();
+const wss = new WebSocket.Server({ server });
 
-  const clients = {};
+const recentlyPlayedSongs = [];
+const recentlyPlayedDecember = [];
+const recentlyPlayedAds = [];
 
-  const recentlyPlayedSongs = [];
-  const recentlyPlayedDecember = [];
-  const recentlyPlayedAds = [];
+let decemberSongCount = 0;
+const DECEMBER_SONG_LIMIT = 4; // Cambia este número para ajustar la cantidad de canciones de diciembre
 
-  let decemberSongCount = 0;
-  const DECEMBER_SONG_LIMIT = 4; // Cambia este número para ajustar la cantidad de canciones de diciembre
+const horasHimno = ["0 6 * * *", "0 12 * * *", "0 18 * * *", "0 0 * * *"];
 
-  // Define las horas en las que deseas reproducir el himno (por ejemplo, a las 6:00 AM,12:00 AM, 12:00 PM y 6:00 PM)
-  const horasHimno = ["0 6 * * *", "0 12 * * *", "0 18 * * *", "0 0 * * *"];
-
-  io.on("connection", (socket) => {
-    console.log("Cliente conectado");
-
-    clients[socket.id] = socket;
-    const numClients = Object.keys(clients).length;
-    console.log(`Número de clientes conectados: ${numClients}`);
-
-    // Suponiendo que tienes una función que se activa cuando la pista cambia
-    const onTrackChange = (newTrack) => {
-      io.emit("trackChange", { track: newTrack });
-    };
-
-    // Función para reproducir el himno
-    const reproducirHimno = () => {
-      const himnoPath = "himno/HimnoNacional.mp3";
-      console.log(himnoPath);
-      io.emit("himno", himnoPath);
-      onTrackChange(himnoPath);
-    };
-
-    // Programa las tareas cron para reproducir el himno en las horas especificadas
-    for (const hora of horasHimno) {
-      cron.schedule(hora, () => {
-        reproducirHimno();
-      });
+const broadcast = (data) => {
+  wss.clients.forEach((client) => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(JSON.stringify(data));
     }
+  });
+};
 
-    socket.on("play", async () => {
-      try {
-        const currentMonth = moment().tz("America/Bogota").format("M");
-        let songPath;
+const onTrackChange = (newTrack) => {
+  broadcast({ event: "trackChange", track: newTrack });
+};
 
-        if (currentMonth === "12") {
-          // Si es diciembre
-          if (decemberSongCount < DECEMBER_SONG_LIMIT) {
-            const decemberSongs = await getCachedDecemberSongs(); // Usando versión en caché
-            const decemberSong = obtenerAudioAleatoriaSinRepetirDeciembre(
-              decemberSongs,
-              recentlyPlayedDecember
-            );
-            songPath = decemberSong
-              ? decodeURIComponent(decemberSong).replace("public/", "")
-              : null;
-            decemberSongCount++;
-            console.log(recentlyPlayedDecember);
+const reproducirHimno = () => {
+  const himnoPath = "himno/HimnoNacional.mp3";
+  console.log(himnoPath);
+  broadcast({ event: "himno", path: himnoPath });
+  onTrackChange(himnoPath);
+};
+
+for (const hora of horasHimno) {
+  cron.schedule(hora, () => {
+    reproducirHimno();
+  });
+}
+
+wss.on("connection", (ws) => {
+  console.log("Cliente conectado");
+
+  ws.on("message", async (message) => {
+    const { event } = JSON.parse(message);
+
+    switch (event) {
+      case "play":
+        try {
+          const currentMonth = moment().tz("America/Bogota").format("M");
+          let songPath;
+
+          if (currentMonth === "12") {
+            if (decemberSongCount < DECEMBER_SONG_LIMIT) {
+              const decemberSongs = await getDecemberSongs();
+              const decemberSong = obtenerAudioAleatoriaSinRepetirDeciembre(
+                decemberSongs,
+                recentlyPlayedDecember
+              );
+              songPath = decemberSong
+                ? decodeURIComponent(decemberSong).replace("public/", "")
+                : null;
+              decemberSongCount++;
+            } else {
+              const songs = await getAllSongs();
+              const randomSong = obtenerAudioAleatoriaSinRepetir(
+                songs,
+                recentlyPlayedSongs
+              );
+              songPath = randomSong
+                ? decodeURIComponent(randomSong.filepath).replace("public/", "")
+                : null;
+              decemberSongCount = 0;
+            }
           } else {
-            const songs = await getCachedSongs();
+            const songs = await getAllSongs();
             const randomSong = obtenerAudioAleatoriaSinRepetir(
               songs,
               recentlyPlayedSongs
@@ -90,84 +90,47 @@ module.exports = (server) => {
             songPath = randomSong
               ? decodeURIComponent(randomSong.filepath).replace("public/", "")
               : null;
-            decemberSongCount = 0; // Resetear el contador para volver a las canciones de diciembre
           }
-        } else {
-          const songs = await getCachedSongs();
-          const randomSong = obtenerAudioAleatoriaSinRepetir(
-            songs,
-            recentlyPlayedSongs
+
+          if (songPath) {
+            console.log("Ruta de la canción:", songPath);
+            broadcast({ event: "play", path: songPath });
+            onTrackChange(songPath);
+          } else {
+            console.error("La ruta de la canción es inválida o undefined");
+          }
+        } catch (error) {
+          console.error("Error al obtener la canción", error);
+        }
+        break;
+
+      case "pause":
+        broadcast({ event: "pause" });
+        break;
+
+      case "ads":
+        try {
+          const ads = await getAllAds();
+          const randomAd = obtenerAnuncioAleatorioConPrioridad(
+            ads,
+            recentlyPlayedAds
           );
-          songPath = randomSong
-            ? decodeURIComponent(randomSong.filepath).replace("public/", "")
-            : null;
+          const decodedPath = decodeURIComponent(randomAd.filepath);
+          const adWithoutPublic = decodedPath.replace("public/", "");
+          broadcast({ event: "playAd", path: adWithoutPublic });
+          onTrackChange(adWithoutPublic);
+        } catch (error) {
+          console.error("Error al obtener el anuncio", error);
         }
-
-        if (songPath) {
-          console.log("Ruta de la canción:", songPath);
-          io.emit("play", songPath);
-          onTrackChange(songPath);
-        } else {
-          console.error("La ruta de la canción es inválida o undefined");
-        }
-      } catch (error) {
-        console.error("Error al obtener la canción", error);
-        // Asume que tienes una función getLocalSongs que podría beneficiarse de la caché también
-        getLocalSongs() // Asume esta función también está implementada con caché
-          .then((songs) => {
-            const randomSong = obtenerAudioAleatoriaSinRepetir(
-              songs,
-              recentlyPlayedSongs
-            );
-            io.emit(
-              "play",
-              decodeURIComponent(randomSong.filepath).replace("public/", "")
-            );
-            onTrackChange(randomSong.filepath);
-          })
-          .catch((error) => {
-            console.error("Error al obtener las canciones locales:", error);
-          });
-      }
-    });
-
-    socket.on("pause", () => {
-      io.emit("pause");
-    });
-
-    socket.on("ads", async () => {
-      try {
-        const ads = await getCachedAds();
-        const randomAd = obtenerAnuncioAleatorioConPrioridad(
-          ads,
-          recentlyPlayedAds
-        );
-        const decodedPath = decodeURIComponent(randomAd.filepath);
-        const adWithoutPublic = decodedPath.replace("public/", "");
-        io.emit("playAd", adWithoutPublic);
-        onTrackChange(adWithoutPublic);
-      } catch (error) {
-        console.error("Error al obtener el anuncio", error);
-
-        // Manejar el error aquí y luego llamar a getLocalAds
-        getLocalAds()
-          .then((ads) => {
-            const randomAd = obtenerAnuncioAleatorioConPrioridad(
-              ads,
-              recentlyPlayedAds
-            );
-            io.emit("playAd", randomAd);
-            onTrackChange(randomAd);
-          })
-          .catch((error) => {
-            console.error("Error al obtener los anuncios:", error);
-            io.emit("playAd", "");
-          });
-      }
-    });
-
-    socket.on("disconnect", () => {
-      delete clients[socket.id];
-    });
+        break;
+    }
   });
-};
+
+  ws.on("close", () => {
+    console.log("Cliente desconectado");
+  });
+});
+
+server.listen(3000, () => {
+  console.log("Servidor escuchando en el puerto 3000");
+});
