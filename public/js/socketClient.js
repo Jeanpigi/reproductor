@@ -26,7 +26,7 @@ let settings = {
   cancionAnterior: "",
 };
 
-const socket = new WebSocket("ws://localhost:3000");
+const socket = new WebSocket("ws://localhost:3005");
 
 const init = () => {
   elements.range.disabled = true;
