@@ -1,4 +1,3 @@
-// Elementos del DOM
 const elements = {
   playButton: document.getElementById("play-button"),
   play: document.getElementById("play-btn"),
@@ -11,14 +10,13 @@ const elements = {
   recordButton: document.getElementById("record-button"),
 };
 
-// Configuración inicial
 let settings = {
   isRotating: false,
   pausedTime: 0,
   animationId: null,
   isDragging: false,
   isPlaying: false,
-  adDuration: 900, // Duración del anuncio en segundos (15 minutos)
+  adDuration: 900,
   accumulatedDuration: 0,
   song: "",
   anuncio: "",
@@ -35,30 +33,22 @@ const init = () => {
 
 const bindEvents = () => {
   socket.addEventListener("open", () => {
-    console.log("El cliente se ha conectado al servidor de radio");
-  });
-
-  socket.addEventListener("close", () => {
-    console.log("El cliente se ha desconectado del servidor de radio");
+    console.log("Conectado al servidor WebSocket");
   });
 
   socket.addEventListener("message", (event) => {
-    const { event: eventType, path } = JSON.parse(event.data);
-
-    switch (eventType) {
-      case "play":
-        handleSocketPlay(path);
-        break;
-      case "playAd":
-        handleSocketPlayAd(path);
-        break;
-      case "himno":
-        handleHimnoPlay(path);
-        break;
-      case "pause":
-        pauseSong();
-        break;
+    const response = JSON.parse(event.data);
+    if (response.type === "play") {
+      handleSocketPlay(response.path);
+    } else if (response.type === "playAd") {
+      handleSocketPlayAd(response.path);
+    } else if (response.type === "himno") {
+      handleHimnoPlay(response.path);
     }
+  });
+
+  socket.addEventListener("close", () => {
+    console.log("Desconectado del servidor WebSocket");
   });
 
   elements.playButton.addEventListener("click", handlePlayButtonClick);
@@ -88,12 +78,12 @@ const handlePlayButtonClick = () => {
     if (settings.isPlaying) {
       playSong(settings.song);
     } else {
-      socket.send(JSON.stringify({ event: "play" }));
+      socket.send(JSON.stringify({ type: "play" }));
       settings.isPlaying = true;
     }
   } else {
     pauseSong();
-    socket.send(JSON.stringify({ event: "pause" }));
+    socket.send(JSON.stringify({ type: "pause" }));
   }
 };
 
@@ -102,6 +92,20 @@ const handleSocketPlay = (cancion) => {
   elements.audioPlayer.src = cancion;
   playSong(cancion);
   changeSongtitle(cancion);
+};
+
+const handleSocketPlayAd = (ad) => {
+  if (!ad || typeof ad !== "string" || ad.trim() === "") {
+    nextSong();
+    return;
+  }
+  settings.song = "";
+  settings.anuncio = ad;
+  elements.audioPlayer.src = ad;
+  playSong(ad);
+  changeSongtitle(ad);
+  stopRotation();
+  settings.isRotating = false;
 };
 
 const handleHimnoPlay = (himnoPath) => {
@@ -122,7 +126,7 @@ const handleHimnoPlay = (himnoPath) => {
 
 const handleAudioEnded = () => {
   if (settings.accumulatedDuration >= settings.adDuration) {
-    socket.send(JSON.stringify({ event: "ads" }));
+    socket.send(JSON.stringify({ type: "ads" }));
     settings.accumulatedDuration = 0;
   } else {
     nextSong();
@@ -139,20 +143,6 @@ const loadMetaData = () => {
   updateProgress();
 };
 
-const handleSocketPlayAd = (ad) => {
-  if (!ad || typeof ad !== "string" || ad.trim() === "") {
-    nextSong();
-    return;
-  }
-  settings.song = "";
-  settings.anuncio = ad;
-  elements.audioPlayer.src = ad;
-  playSong(ad);
-  changeSongtitle(ad);
-  stopRotation();
-  settings.isRotating = false;
-};
-
 const rotateImage = () => {
   if (settings.isPlaying) {
     elements.playerImage.style.transform += "rotate(1deg)";
@@ -166,7 +156,6 @@ const stopRotation = () => {
 
 const updateControls = () => {
   const isPaused = elements.audioPlayer.paused;
-
   if (isPaused) {
     elements.play.classList.replace("fa-pause", "fa-play");
     elements.playButton.classList.remove("orange");
@@ -204,15 +193,12 @@ const playSong = (cancion) => {
   if (!cancion) {
     nextSong();
   }
-
   if (settings.isPlaying) {
     elements.audioPlayer.currentTime = settings.pausedTime;
     settings.pausedTime = 0;
   }
-
   elements.audioPlayer.play();
   updateControls();
-
   if (!settings.isRotating) {
     rotateImage();
     settings.isRotating = true;
@@ -230,7 +216,7 @@ const pauseSong = () => {
 
 const nextSong = () => {
   settings.cancionAnterior = settings.song;
-  socket.send(JSON.stringify({ event: "play" }));
+  socket.send(JSON.stringify({ type: "play" }));
 };
 
 const backSong = () => {
@@ -246,7 +232,6 @@ const formatTime = (time) => {
 
 const padTime = (time) => (time < 10 ? `0${time}` : time);
 
-// Debounce function that takes in another function and a delay time delay.
 const debounce = (func, delay) => {
   let timeoutId;
   return (...args) => {
