@@ -1,11 +1,12 @@
-const { getLocalSongs, getLocalAds } = require("./localFile");
+const { getAllSongs } = require("../model/songLite");
+const { getAllAds } = require("../model/adLite");
 
 let MAX_RECENT_ITEMS = 0;
 let MAX_RECENT_ITEMS_ADS = 0;
 
 async function getNumberMusic() {
   try {
-    const songs = await getLocalSongs();
+    const songs = await getAllSongs();
     MAX_RECENT_ITEMS = songs.length;
   } catch (error) {
     console.error("Error al obtener canciones locales:", error);
@@ -16,7 +17,7 @@ async function getNumberMusic() {
 
 async function getNumberAds() {
   try {
-    const ads = await getLocalAds();
+    const ads = await getAllAds();
     MAX_RECENT_ITEMS_ADS = ads.length;
   } catch (error) {
     console.error("Error al obtener anuncios locales:", error);
