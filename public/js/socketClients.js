@@ -35,7 +35,7 @@ const init = () => {
 
 const bindEvents = () => {
   socket.addEventListener("open", () => {
-    console.log(`El cliente se ha conectado al servidor de radio`);
+    console.log("El cliente se ha conectado al servidor de radio");
   });
 
   socket.addEventListener("close", () => {
