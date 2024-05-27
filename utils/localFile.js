@@ -12,7 +12,5 @@ async function getDecemberSongs() {
 }
 
 module.exports = {
-  getLocalSongs,
-  getLocalAds,
   getDecemberSongs,
 };
