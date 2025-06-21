@@ -92,7 +92,7 @@ Si deseas contribuir a este proyecto y ayudarlo a crecer, sigue estos pasos:
 
 # Authors
 
-- **Jean Pierre Giovanni Arenas Ortiz**
+- **Jean Pierre**
 
 ## Licencia
 
